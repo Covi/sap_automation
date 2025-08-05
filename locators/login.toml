@@ -1,0 +1,6 @@
+# locators/login.toml
+# Locators para la página de Login de SAP
+
+input_user     = "#sap-user"
+input_password = "#sap-password"
+input_login    = "#LOGON_BUTTON"

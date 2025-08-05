@@ -1,0 +1,4 @@
+# locators/easy_access.toml
+# Usamos el ID que encontraste para el campo de transacción.
+
+transaction_input = "#ToolbarOkCode"

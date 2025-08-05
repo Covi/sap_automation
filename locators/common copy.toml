@@ -1,0 +1,17 @@
+# locators/common.toml
+
+# Definimos una lista de tablas para la clave 'execute_f8'
+[[execute_f8]]
+strategy = "locator"
+# Intento A: El ID que sabes que funciona
+value = "#M0:50::btn[8]" 
+
+[[execute_f8]]
+strategy = "locator"
+# Intento B: El title que es casi infalible (buscamos un div, no un button)
+value = "div[title$='(F8)']"
+
+[[execute_f8]]
+strategy = "keyboard"
+# Intento C (Fallback final): Pulsar la tecla F8
+value = "F8"

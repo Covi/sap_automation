@@ -1,0 +1,25 @@
+# Archivos generados por Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+sdist/
+wheel/
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+.env*
+
+# Archivos de desarrollo y temporales
+*.log
+*.tmp
+*.swp
+*.bak
+
+# Si tienes archivos de configuración sensibles, ¡AÑÁDELOS AQUÍ!
+# ejemplo: config.ini
+# ejemplo: secretos.json
