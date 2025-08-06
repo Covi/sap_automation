@@ -6,6 +6,8 @@ from pathlib import Path
 from config import SAP_USERNAME, SAP_PASSWORD, Mb52Config
 from utils.logger import log
 
+from core.builders.mb52  import build_mb52_service # <-- Importamos nuestro builder
+
 from core.browser_manager import BrowserManager
 from core.providers.toml_provider import TomlLocatorProvider
 from core.providers.composite_provider import CompositeLocatorProvider
@@ -32,31 +34,10 @@ def page(browser_manager):
 
 @pytest.fixture(scope="module")
 def mb52_service(page):
-    # --- 1. Crear los proveedores simples que leen ficheros ---
-    common_provider = TomlLocatorProvider("locators/common.toml")
-    login_provider = TomlLocatorProvider("locators/login.toml")
-    easy_access_provider = TomlLocatorProvider("locators/easy_access.toml")
-    mb52_provider = TomlLocatorProvider("locators/mb52.toml")
-
-    # --- 2. Crear los proveedores COMPUESTOS para las páginas que los necesiten ---
-    # La prioridad la da el orden: primero buscará en el específico, luego en el común.
-    composite_easy_access = CompositeLocatorProvider([easy_access_provider, common_provider])
-    composite_mb52 = CompositeLocatorProvider([mb52_provider, common_provider])
-
-    # --- 3. Inyectar el proveedor ÚNICO y ya compuesto en cada página ---
-    login_page = SAPLoginPage(page, locator_provider=login_provider)
-    easy_access_page = SAPEasyAccessPage(page, locator_provider=composite_easy_access)
-    mb52_page = MB52Page(page, locator_provider=composite_mb52)
-
-    # --- 4. Crear los servicios ---
-    login_service = LoginService(login_page, easy_access_page)
-    transaction_service = TransactionService(easy_access_page)
-    service = MB52Service(transaction_service, mb52_page)
-
-    # --- 5. Ejecutar el setup (login) ---
-    login_service.login(SAP_USERNAME, SAP_PASSWORD)
-    
-    return service
+    """
+    Fixture que construye el servicio MB52 delegando en el builder central.
+    """
+    return build_mb52_service(page)
 
 # --- La Tarea ---
 def test_generar_informe_mb52(mb52_service, page):
