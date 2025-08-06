@@ -1,40 +1,43 @@
+# main.py
+
+import argparse
+import importlib
+from typing import Dict, Any
 from core.browser_manager import BrowserManager
 from utils.logger import log
+from core.builders.builder_protocol import BuilderProtocol
 
-# MB52
-from core.builders.mb52 import build_mb52_service
-from data_models.mb52_models import Mb52FormData
-from config import Mb52Config
+def parse_params(param_list: list[str]) -> Dict[str, Any]:
+    params: Dict[str, Any] = {}
+    for p in param_list:
+        if '=' in p:
+            k, v = p.split('=', 1)
+            params[k] = v
+        else:
+            params[p] = True
+    return params
 
-def main():
-    """
-    Función principal que ejecuta el robot de MB52.
-    """
-    log.info("Iniciando ejecución desde main.py")
-    manager = BrowserManager(headless=True) # Lo ejecutamos en headless
-    
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Automatización SAP Web GUI")
+    parser.add_argument("transaccion", type=str, help="Nombre de la transacción a ejecutar")
+    parser.add_argument('params', nargs='*', help='Parámetros clave=valor para la transacción')
+    args = parser.parse_args()
+
+    params = parse_params(args.params)
+
+    manager = BrowserManager(headless=True)
+    page = manager.start_browser()
+
     try:
-        page = manager.start_browser()
-        
-        # 1. Usamos el builder para obtener el servicio ya logueado y listo
-        mb52_service = build_mb52_service(page)
-        
-        # 2. Preparamos los datos para la tarea
-        datos_informe = Mb52FormData(centro=Mb52Config.DEFAULT_CENTRO)
-        fichero_de_salida = f"{Mb52Config.DOWNLOAD_DIR}/{Mb52Config.EXPORT_FILENAME}"
-        
-        # 3. Ejecutamos la lógica de negocio
-        mb52_service.generar_y_descargar_informe_completo(
-            form_data=datos_informe,
-            nombre_fichero=fichero_de_salida
-        )
-        
-        log.info("Ejecución desde main.py completada con éxito.")
+        module = importlib.import_module(f"core.builders.{args.transaccion.lower()}_builder")
+        builder: BuilderProtocol = getattr(module, "builder")
+
+        service = builder.build_service(page)
+        builder.run_service(service, params)
 
     except Exception as e:
-        log.error(f"Ha ocurrido un error durante la ejecución: {e}", exc_info=True)
+        log.error(f"Error ejecutando transacción {args.transaccion}: {e}", exc_info=True)
     finally:
-        log.info("Cerrando el navegador.")
         manager.close_browser()
 
 if __name__ == "__main__":
