@@ -16,10 +16,10 @@ class Iq09Page(SAPPageBase):
         self.results_table = page.locator(locator_provider.get('results.tabla_resultados'))
 
         ### CAMBIO: Cargamos los locators de descarga desde el provider ###
-        self.download_button = page.locator(locator_provider.get('buttons.descargar_hoja'))
-        self.filename_dialog_input = page.locator(locator_provider.get('dialogs.filename_input'))
-        self.exportar_a_button = page.locator(locator_provider.get('dialogs.exportar_a'))
-        self.ok_button = page.locator(locator_provider.get('dialogs.ok_button'))
+        # self.download_button = page.locator(locator_provider.get('buttons.descargar_hoja'))
+        # self.filename_dialog_input = page.locator(locator_provider.get('dialogs.filename_input'))
+        # self.exportar_a_button = page.locator(locator_provider.get('dialogs.exportar_a'))
+        # self.ok_button = page.locator(locator_provider.get('dialogs.ok_button'))
 
         # --- Mapa del Formulario ---
         self.form_map = {
@@ -28,19 +28,16 @@ class Iq09Page(SAPPageBase):
         }
 
     def rellenar_formulario(self, data: Iq09FormData):
-        # ... (sin cambios)
         log.info("Rellenando el formulario de la transacción IQ09.")
         self._fill_form(self.form_map, data)
 
     def ejecutar_informe(self):
-        # ... (sin cambios)
         log.info("Ejecutando el informe de IQ09.")
         self.execute()
         self.results_table.wait_for()
         log.info("Tabla de resultados de IQ09 visible.")
 
     def is_results_table_visible(self) -> bool:
-        # ... (sin cambios)
         return self.results_table.is_visible()
 
     def descargar_informe(self, fichero_de_salida_nombre: str) -> Download:
@@ -48,17 +45,17 @@ class Iq09Page(SAPPageBase):
         Orquesta la interacción UI para iniciar la descarga usando los locators correctos.
         """
         log.info("Iniciando descarga para IQ09...")
-        try:
-            with self.page.expect_download() as download_info:
-                ### CAMBIO: Usamos los atributos de la clase, no strings hardcodeados ###
-                self.download_button.click()
-                self.filename_dialog_input.fill(fichero_de_salida_nombre)
-                # La secuencia puede variar, aquí un ejemplo genérico
-                # self.filename_dialog_input.press("Enter")
-                self.exportar_a_button.click()
-                self.ok_button.click()
+        # try:
+        #     with self.page.expect_download() as download_info:
+        #         ### CAMBIO: Usamos los atributos de la clase, no strings hardcodeados ###
+        #         self.download_button.click()
+        #         self.filename_dialog_input.fill(fichero_de_salida_nombre)
+        #         # La secuencia puede variar, aquí un ejemplo genérico
+        #         # self.filename_dialog_input.press("Enter")
+        #         self.exportar_a_button.click()
+        #         self.ok_button.click()
 
-            return download_info.value
-        except (TimeoutError, Error) as e:
-            log.error(f"El proceso de descarga para IQ09 ha fallado: {e}")
-            raise
+        #     return download_info.value
+        # except (TimeoutError, Error) as e:
+        #     log.error(f"El proceso de descarga para IQ09 ha fallado: {e}")
+        #     raise
