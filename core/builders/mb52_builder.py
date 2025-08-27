@@ -1,4 +1,4 @@
-# builders/mb52_builder.py
+# Fichero: core/builders/mb52_builder.py
 # Construye y configura todo lo necesario para devolver un MB52Service listo para usar.
 
 from pathlib import Path
@@ -26,6 +26,7 @@ from utils.logger import log
 
 class MB52Builder(BuilderProtocol):
     def build_service(self, page) -> MB52Service:
+        # --- Este método no necesita cambios ---
         common_provider = TomlLocatorProvider("locators/common.toml")
         login_provider = TomlLocatorProvider("locators/login.toml")
         easy_access_provider = TomlLocatorProvider("locators/easy_access.toml")
@@ -47,20 +48,35 @@ class MB52Builder(BuilderProtocol):
         return mb52_service
 
     def run_service(self, service: MB52Service, params: Dict[str, Any]) -> None:
-        centro = params.get("centro")
-        if not centro:
-            raise ValueError("El parámetro 'centro' es obligatorio para MB52")
+        ### --- LÓGICA DE DATOS MEJORADA (SOLID) --- ###
 
-        # Construye el objeto de datos validado (Pydantic) con el dict completo
-        datos = Mb52FormData(**params)  # Aquí Pydantic valida además formato
+        try:
+            # 1. Prepara un diccionario con los valores por defecto de la config.
+            default_data = {
+                "centro": Mb52Config.DEFAULT_CENTRO
+            }
+
+            # 2. Une los defaults con los params del usuario. El valor en 'params' tiene prioridad.
+            final_data = default_data | params
+
+            # 3. Crea el modelo Pydantic. Si 'centro' no vino en 'params',
+            #    ahora tendrá el valor por defecto de la configuración.
+            datos = Mb52FormData(**final_data)
+
+        except ValidationError as e:
+            log.error(f"Error de validación en los parámetros para MB52: {e}")
+            raise ValueError("Parámetros inválidos.") from e
+
+        ### --- LÓGICA DE EJECUCIÓN (SIN CAMBIOS) --- ###
 
         downloads_dir = Path(Mb52Config.DOWNLOAD_DIR)
         downloads_dir.mkdir(parents=True, exist_ok=True)
 
-        filename = params.get("output") or Mb52Config.EXPORT_FILENAME or f"mb52_{centro}.xlsx"
+        # Usamos 'datos.centro' que es el valor ya validado y con el default aplicado
+        filename = params.get("output") or Mb52Config.EXPORT_FILENAME or f"mb52_{datos.centro}.xlsx"
         path_fichero = downloads_dir / filename
 
-        log.info(f"Iniciando generación de informe MB52 para centro {centro}")
+        log.info(f"Iniciando generación de informe MB52 para centro {datos.centro}")
 
         service.generar_informe(datos)
         service.descargar_informe(str(path_fichero), filename)

@@ -29,8 +29,11 @@ class LogConfig:
 # --- Configuración por Transacción ---
 class Mb52Config:
     TRANSACTION_CODE = "MB52"
+    DEFAULT_ALMACEN = ""
     DEFAULT_CENTRO = "E086"
+    DEFAULT_MATERIAL = ""
     DOWNLOAD_DIR = "/home/covi/Descargas"
     EXPORT_FILENAME = "STOCK.xlsx"
 
 # Aquí añadiríamos clases de config para otras transacciones como Iq09Config, etc.
+
