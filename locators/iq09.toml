@@ -1,0 +1,16 @@
+# Fichero: locators/iq09.toml
+# Descripción: Locators para la transacción IQ09.
+
+[form]
+# El centro que ya tenías de MB52, si el ID es el mismo
+centro   = "[id='M0:46:::37:34']"
+# El nuevo campo de número de serie
+n_serie  = "[id='M0:46:::29:34']"
+
+[results]
+# Usamos este como placeholder. Tendrás que verificar si el ID es el
+# correcto una vez que ejecutes el informe de IQ09.
+tabla_resultados = "#userarealist0"
+
+# NOTA: De momento no añadimos botones de descarga, etc.
+# Se pueden añadir después si son necesarios.
