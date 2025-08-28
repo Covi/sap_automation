@@ -9,6 +9,7 @@ load_dotenv()
 # --- Configuración General (SIN CREDENCIALES GLOBALES) ---
 SAP_BASE_URL = os.getenv("SAP_URL", "https://s4pf.refrival.com/sap/bc/gui/sap/its/webgui?sap-language=ES")
 DEFAULT_TIMEOUT = 30000
+DEFAULT_BROWSER = os.getenv("BROWSER", "firefox")  # "chromium", "firefox" o "webkit"
 
 # --- Configuración del Logger ---
 class LogConfig:

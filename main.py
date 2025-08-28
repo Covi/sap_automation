@@ -1,10 +1,10 @@
-# Fichero: main.py
-
+# main.py
 import argparse
-from typing import Dict, Any, List
+from typing import Dict, Any
 from core.browser_manager import BrowserManager
-from utils.logger import log
 from core.builders.generic_builder import GenericTransactionBuilder
+from utils.logger import log
+from config import DEFAULT_BROWSER
 
 def parse_params(param_list: list[str]) -> Dict[str, Any]:
     """Convierte una lista de 'k=v' en un diccionario."""
@@ -20,27 +20,32 @@ def parse_params(param_list: list[str]) -> Dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Automatización SAP Web GUI")
     parser.add_argument("transaccion", type=str, help="Nombre de la transacción a ejecutar (ej: mb52)")
-    parser.add_argument('params', nargs='*', help="Parámetros 'clave=valor' para la transacción")
+    parser.add_argument("params", nargs='*', help="Parámetros 'clave=valor' para la transacción")
     parser.add_argument(
-        '-hd', 
-        '--headless', 
-        action='store_true', 
+        '-b', '--browser',
+        type=str,
+        choices=['chromium', 'firefox', 'webkit'],
+        help=f"Navegador a usar. Por defecto: {DEFAULT_BROWSER}"
+    )
+    parser.add_argument(
+        '-hd', '--headless',
+        action='store_true',
         help="Ejecuta el navegador en modo headless (sin interfaz gráfica)."
     )
 
     args = parser.parse_args()
-
     params = parse_params(args.params)
-    
-    ### CAMBIO 2: Usar el valor del argumento al crear el BrowserManager ###
-    manager = BrowserManager(headless=args.headless)
+
+    # Decide navegador: argumento > config
+    browser_type = args.browser or DEFAULT_BROWSER
+
+    manager = BrowserManager(browser_type=browser_type, headless=args.headless)
     page = manager.start_browser()
 
     try:
         builder = GenericTransactionBuilder(args.transaccion.lower())
         service = builder.build_service(page)
         builder.run_service(service, params)
-
     except (ValueError, KeyError) as e:
         log.error(f"Error de configuración o parámetros: {e}", exc_info=True)
     except Exception as e:
