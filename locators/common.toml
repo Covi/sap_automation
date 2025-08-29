@@ -15,3 +15,11 @@ dialog_ok      = "[id='UpDownDialogChoose']"
 # No se usan por ahora:
 # popupDialogInputField	= "#popupDialogInputField" # Este es el ID del campo de entrada en el diálogo de descarga
 # popupDialogChoose		= "#UpDownDialogChoose" # Este es el ID del diálogo de confirmación de descarga
+
+# Locators para el componente menu_export_dialog
+[menu_export_dialog]
+radio_texto_con_tabuladores = "role=radio[name='Texto con tabuladores']"
+boton_continuar = "role=button[name='Continuar']"
+formato_dropdown = "#popupDialogFilterCbx-btn"
+opcion_hoja_calculo = "role=option[name='Archivos de hoja de cálculo (*.xlsx)']"
+boton_ok = "role=button[name='OK']"

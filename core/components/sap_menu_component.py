@@ -15,9 +15,9 @@ class SAPMenuComponent:
         """
         Localiza un elemento de menú por su texto, priorizando roles semánticos.
         """
-        locator_con_rol = self.page.get_by_role("button", name=text, exact=True).or_(
-                              self.page.get_by_role("menuitem", name=text, exact=True)
-                          )
+        locator_con_rol = self.page.get_by_role("cell", name=text, exact=True) \
+            .or_(self.page.get_by_role("button", name=text, exact=True)) \
+            .or_(self.page.get_by_role("menuitem", name=text, exact=True))
         
         # Se añade get_by_text como fallback por si SAP no renderiza el rol correcto.
         return locator_con_rol.or_(self.page.get_by_text(text, exact=True))
@@ -33,6 +33,7 @@ class SAPMenuComponent:
             menu_item = self._get_menu_item(item_text).first
             menu_item.click()
 
-            # AÑADE ESTA LÍNEA PARA DEPURAR EL SIGUIENTE PASO
+            # FIXME AÑADE ESTA LÍNEA PARA DEPURAR EL SIGUIENTE PASO
             # Esto pausará la ejecución justo después de cada clic en el menú.
-            self.page.pause()
+            #self.page.pause()
+            log.debug(f"Clic en el menú: {item_text}")

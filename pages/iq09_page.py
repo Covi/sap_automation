@@ -52,7 +52,7 @@ class Iq09Page(SAPPageBase):
         try:
             # Primero, usamos el componente de menú para navegar y abrir el diálogo.
             # La ruta la sacamos del 'record' que nos diste.
-            self.menu.navigate_to("Menú", "Fichero...")
+            self.menu.navigate_to("Menú", "Lista", "Grabar", "Fichero...")
             
             # Segundo, usamos el componente de diálogo para gestionar la exportación.
             # Este método ya se encarga de esperar la descarga y devolverla.
