@@ -6,7 +6,9 @@ from core.providers.base_provider import BaseLocatorProvider
 from data_models.iq09_models import Iq09FormData
 from utils.logger import log
 
-# 1. Se importan los dos componentes que vamos a usar
+# Componentes
+from core.components.sap_form_component import SAPFormComponent
+from core.components.sap_form_strategies import SimpleFillStrategy
 from core.components.sap_menu_component import SAPMenuComponent
 from core.components.sap_menu_export_dialog import SAPMenuExportDialog
 
@@ -19,7 +21,8 @@ class Iq09Page(SAPPageBase):
         self.n_serie_input = page.locator(locator_provider.get('form.n_serie'))
         self.results_table = page.locator(locator_provider.get('results.tabla_resultados'))
 
-        # --- 2. Se instancian los componentes expertos ---
+        # Componentes:
+        self.form = SAPFormComponent(page, locator_provider)
         self.menu = SAPMenuComponent(self.page)
         self.export_dialog = SAPMenuExportDialog(self.page, locator_provider)
 
@@ -29,11 +32,11 @@ class Iq09Page(SAPPageBase):
             'n_serie': self.n_serie_input,
         }
 
-    # Los métodos rellenar_formulario, ejecutar_informe, y is_results_table_visible
-    # se quedan exactamente igual.
     def rellenar_formulario(self, data: Iq09FormData):
-        log.info("Rellenando el formulario de la transacción IQ09.")
-        self._fill_form(self.form_map, data)
+        """
+        Rellena el formulario (componente formulario) con una estrategia de cumplimentado.
+        """
+        self.form.fill_form(data, self.form_map, strategy=SimpleFillStrategy())
 
     def ejecutar_informe(self):
         log.info("Ejecutando el informe de IQ09.")

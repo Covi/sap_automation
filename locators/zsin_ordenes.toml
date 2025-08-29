@@ -1,0 +1,36 @@
+# Fichero: locators/zsin_ordenes.toml
+
+# --- Locators para el formulario de búsqueda ---
+[form]
+# Para los rangos, ahora definimos un array con 2 locator (desde/hasta)
+# FIXME: Estos son XPaths migrados. Deberías buscar locators más robustos (por label, etc.)
+status    = ["[id='M0:46:::3:34']", "[id='M0:46:::3:59']"]
+mecanico  = ["[id='M0:46:::4:34']", "[id='M0:46:::4:59']"]
+clase     = ["[id='M0:46:::12:34']", "[id='M0:46:::12:59']"]
+cliente   = ["[id='M0:46:::22:34']", "[id='M0:46:::22:59']"]
+fechatope = ["[id='M0:46:::29:34']", "[id='M0:46:::29:59']"]
+fechainicio = ["[id='M0:46:::30:34']", "[id='M0:46:::30:59']"]
+fechaicreacion = ['//*[@id="M0:46:::27:34"]', '//*[@id="M0:46:::27:59"]']
+
+# --- Locators para la pantalla de resultados ---
+[results]
+# FIXME: Este ID es probablemente dinámico. Un locator como 'table[role="grid"]' sería más robusto.
+tabla             = "#C101"
+seleccionar_todas = "#grid#C101#0,0-SELCOLTOGGLE"
+
+# --- Locators para la barra de herramientas de la tabla de resultados ---
+[results.toolbar]
+# FIXME: Estos locators por 'accesskey' son frágiles. Es mucho mejor usar el texto visible.
+# Ejemplo: asignar = "role=button[name='Asignar']"
+asignar        = "[accesskey='A']"
+reenviar       = "[accesskey='R']"
+imprimir       = "[accesskey='I']"
+ver_log        = "[accesskey='O']"
+exportar_datos = "[title*='Exportar datos']"
+
+
+# --- Locators para el diálogo de impresión (si aplica) ---
+[print_dialog]
+# FIXME: Estos también son frágiles y deberían ser reemplazados.
+input_tipo_impresora = "[id='M1:46:::0:17']"
+boton_imprimir       = "[title='Visualización de impresión']"

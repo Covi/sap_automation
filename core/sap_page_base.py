@@ -1,3 +1,7 @@
+# core/sap_page_base.py
+# Clase base para todas las páginas SAP, con elementos y métodos comunes
+
+import warnings
 from playwright.sync_api import Page
 from .page_base import PageBase
 from .providers.base_provider import BaseLocatorProvider
@@ -43,6 +47,13 @@ class SAPPageBase(PageBase):
         de un formulario según un mapa de locators.
         """
         # itera sobre los campos del dataclass (ej. 'material', 'centro')
+        warnings.warn(
+            "El método _fill_form está obsoleto. Por favor, "
+            "usa SAPFormComponent.fill_form en su lugar.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
         for field_name, field_value in vars(form_data).items():
             # Si el campo tiene un valor y existe en nuestro mapa de locators
             if field_value is not None and field_name in form_locators_map:

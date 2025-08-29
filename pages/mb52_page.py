@@ -1,13 +1,16 @@
 # pages/mb52_page.py
 # Página para la transacción MB52, especializada en la generación de informes de stock
 
+import warnings
 from playwright.sync_api import Download, TimeoutError, Error
 from core.sap_page_base import SAPPageBase
 from core.providers.base_provider import BaseLocatorProvider
 from data_models.mb52_models import Mb52FormData
 from utils.logger import log
 
-# 1. Se importa el componente que encapsula la lógica del diálogo
+# Componentes
+from core.components.sap_form_component import SAPFormComponent
+from core.components.sap_form_strategies import SimpleFillStrategy
 from core.components.sap_export_dialog import SAPExportDialog
 
 class MB52Page(SAPPageBase):
@@ -24,15 +27,11 @@ class MB52Page(SAPPageBase):
         # El botón que abre el diálogo sigue siendo responsabilidad de la página
         self.download_button = page.locator(locator_provider.get('buttons.descargar_hoja'))
 
-        # 2. Se eliminan los locators del diálogo...
-        # self.filename_dialog_input = ...
-        # self.exportar_a_button = ...
-        # self.ok_button = ...
-
-        # ...y se reemplazan por una instancia del componente experto
+        # Componentes:
+        self.form = SAPFormComponent(page, locator_provider)
         self.export_dialog = SAPExportDialog(self.page, locator_provider)
 
-        # --- Mapa del Formulario (sin cambios) ---
+        # --- Mapa del Formulario ---
         self.form_map = {
             'material': self.material_input,
             'centro': self.centro_input,
@@ -41,9 +40,9 @@ class MB52Page(SAPPageBase):
 
     def rellenar_formulario(self, data: Mb52FormData):
         """
-        Rellena el formulario de MB52 llamando al método genérico del padre.
+        Rellena el formulario (componente formulario) con una estrategia de cumplimentado.
         """
-        self._fill_form(self.form_map, data)
+        self.form.fill_form(data, self.form_map, strategy=SimpleFillStrategy())
 
     def ejecutar_informe(self):
         """

@@ -23,7 +23,6 @@ class MB52Service:
         self.descargar_informe(path, filename)
 
     def generar_informe(self, form_data: Mb52FormData):
-        # Este método se mantiene sin cambios
         self._transaction_service.run_transaction("MB52")
         self._mb52_page.rellenar_formulario(form_data)
         self._mb52_page.ejecutar_informe()
