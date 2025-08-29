@@ -11,8 +11,10 @@ from core.browser_manager import BrowserManager
 from core.builders.generic_builder import GenericTransactionBuilder
 from utils.logger import log
 
-# 2. La fixture ahora prepara el builder para "mb52"
+# La fixture ahora prepara el builder para "mb52"
 @pytest.fixture(scope="function")
+
+# TEST FIXTURE
 def mb52_builder_and_page():
     """
     Prepara el entorno de prueba: inicia el navegador y crea una instancia
@@ -30,6 +32,7 @@ def mb52_builder_and_page():
     manager.close_browser()
 
 
+# TEST CON VALORES POR DEFECTO
 def test_run_service_with_defaults(mb52_builder_and_page):
     """
     Prueba el flujo completo con valores por defecto.
@@ -64,7 +67,7 @@ def test_run_service_with_defaults(mb52_builder_and_page):
         if expected_file.exists():
             expected_file.unlink()
 
-
+# TEST SOBREESCRIBIENDO PARÁMETROS
 def test_run_service_with_overrides(mb52_builder_and_page):
     """
     Prueba el flujo completo pasando parámetros personalizados.
@@ -104,7 +107,7 @@ def test_run_service_with_overrides(mb52_builder_and_page):
             expected_file.unlink()
 
 
-# --- NUEVO TEST USANDO MONKEYPATCH ---
+# --- TEST USANDO MONKEYPATCH ---
 def test_run_service_with_temp_directory(mb52_builder_and_page, monkeypatch, tmp_path):
     """
     Prueba que el fichero se descarga en un directorio temporal y personalizado.
