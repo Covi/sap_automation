@@ -5,29 +5,34 @@ from playwright.sync_api import Download, TimeoutError, Error
 from core.sap_page_base import SAPPageBase
 from core.providers.base_provider import BaseLocatorProvider
 from data_models.mb52_models import Mb52FormData
+from utils.logger import log
+
+# 1. Se importa el componente que encapsula la lógica del diálogo
+from core.components.sap_export_dialog import SAPExportDialog
 
 class MB52Page(SAPPageBase):
     def __init__(self, page, locator_provider: BaseLocatorProvider):
         super().__init__(page, locator_provider)
 
-        # --- Locator provider
-        self.locator_provider = locator_provider
-
-        # --- Locators específicos (incluyendo los de descarga) ---
+        # --- Locators propios de la página (se quedan) ---
         self.material_input = page.locator(locator_provider.get('form.material'))
         self.centro_input = page.locator(locator_provider.get('form.centro'))
         self.almacen_input = page.locator(locator_provider.get('form.almacen'))
         self.results_table = page.locator(locator_provider.get('results.tabla_resultados'))
-
         self.confirm = page.locator(locator_provider.get('common.continuar'))
-        self.ok_button = page.locator(locator_provider.get('common.dialog_ok'))
-
-        # Descarga
+        
+        # El botón que abre el diálogo sigue siendo responsabilidad de la página
         self.download_button = page.locator(locator_provider.get('buttons.descargar_hoja'))
-        self.filename_dialog_input = page.locator(locator_provider.get('dialogs.filename_input'))
-        self.exportar_a_button = page.locator(locator_provider.get('dialogs.exportar_a'))
 
-        # --- Mapa del Formulario ---
+        # 2. Se eliminan los locators del diálogo...
+        # self.filename_dialog_input = ...
+        # self.exportar_a_button = ...
+        # self.ok_button = ...
+
+        # ...y se reemplazan por una instancia del componente experto
+        self.export_dialog = SAPExportDialog(self.page, locator_provider)
+
+        # --- Mapa del Formulario (sin cambios) ---
         self.form_map = {
             'material': self.material_input,
             'centro': self.centro_input,
@@ -44,13 +49,11 @@ class MB52Page(SAPPageBase):
         """
         Ejecuta el informe y espera a que aparezca la tabla de resultados.
         """
-        self.execute() # Método heredado, pulsa botón de ejecutar ([id='M0:50::btn[8]'])
+        self.execute()
 
-        # Espera a que el botón de continuar esté visible y lo hace clic
         self.confirm.wait_for()
         self.confirm.click()
 
-        # Espera a que la tabla de resultados esté visible
         self.results_table.wait_for()
 
     def is_results_table_visible(self) -> bool:
@@ -59,25 +62,19 @@ class MB52Page(SAPPageBase):
 
     def descargar_hoja_calculo(self, fichero_de_salida_nombre: str) -> Download:
         """
-        Orquesta la interacción UI para iniciar la descarga y devuelve el objeto Download.
+        3. El método de descarga ahora es mucho más simple y declarativo.
+        Orquesta la descarga abriendo el diálogo y delegando su gestión al componente.
         """
         try:
             with self.page.expect_download() as download_info:
-                self.download_button.wait_for()
+                # La página es responsable de la acción que abre el diálogo
                 self.download_button.click()
 
-                self.filename_dialog_input.wait_for()
-                self.filename_dialog_input.fill(fichero_de_salida_nombre)
-                self.filename_dialog_input.press("Enter")
+                # La página delega el manejo del diálogo al componente experto
+                self.export_dialog.completar_dialogo(fichero_de_salida_nombre)
 
-                self.exportar_a_button.wait_for()
-                self.exportar_a_button.click()
+            return download_info.value
 
-                self.ok_button.wait_for()
-                self.ok_button.click()
-
-            download = download_info.value
-            return download
-
-        except (TimeoutError, Error):
+        except (TimeoutError, Error) as e:
+            log.error(f"El proceso de descarga para MB52 ha fallado: {e}")
             raise

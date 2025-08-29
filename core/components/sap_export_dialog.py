@@ -2,38 +2,34 @@
 
 from playwright.sync_api import Page
 from utils.logger import log
+from core.providers.base_provider import BaseLocatorProvider
 
 class SAPExportDialog:
     """
     Gestiona la interacción con el diálogo de SAP que pide un nombre de fichero
     y tiene botones de "Exportar" y "OK".
-    
-    NOTA: Este es el componente para el flujo original (tipo MB52).
     """
-    def __init__(self, page: Page):
-        """
-        El constructor ahora recibe 'page' y define sus propios locators internamente.
-        """
+    def __init__(self, page: Page, locator_provider: BaseLocatorProvider):
         self.page = page
         
-        # FIXME: Rellenar con los locators correctos para este diálogo específico.
-        # Estos son los localizadores que antes se pasaban desde fuera.
-        self.filename_input = page.locator('...') 
-        self.export_button = page.locator('...')
-        self.ok_button = page.locator('...')
+        # --- Locators Internos del Componente (los que ya tenías en MB52Page) ---
+        self.filename_input = page.locator(locator_provider.get('dialogs.filename_input'))
+        self.exportar_a_button = page.locator(locator_provider.get('dialogs.exportar_a'))
+        self.ok_button = page.locator(locator_provider.get('common.dialog_ok'))
 
     def completar_dialogo(self, nombre_fichero: str):
         """
-        Este método se mantiene EXACTAMENTE IGUAL que en tu versión original.
-        Su lógica y propósito no han cambiado.
+        Completa los pasos del diálogo de exportación.
+        La lógica es la misma que tenías en MB52Page.
         """
         log.info(f"Completando diálogo de exportación con el nombre: {nombre_fichero}")
+        
         self.filename_input.wait_for()
         self.filename_input.fill(nombre_fichero)
         self.filename_input.press("Enter")
 
-        self.export_button.wait_for()
-        self.export_button.click()
+        self.exportar_a_button.wait_for()
+        self.exportar_a_button.click()
 
         self.ok_button.wait_for()
         self.ok_button.click()
