@@ -45,6 +45,7 @@ class Iq09Page(SAPPageBase):
         Orquesta la interacción UI para iniciar la descarga usando los locators correctos.
         """
         log.info("Iniciando descarga para IQ09...")
+        self.page.pause()  # FIXME
 
         # try:
         #     with self.page.expect_download() as download_info:

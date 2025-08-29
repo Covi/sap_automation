@@ -1,4 +1,4 @@
-# sap_ui/sap_export_dialog.py
+# core/sap_ui/sap_export_dialog.py
 
 from playwright.sync_api import Locator
 
