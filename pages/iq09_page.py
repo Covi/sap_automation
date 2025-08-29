@@ -1,4 +1,4 @@
-# Fichero: pages/iq09_page.py (Versión Corregida)
+# Fichero: pages/iq09_page.py
 
 from playwright.sync_api import Download, TimeoutError, Error
 from core.sap_page_base import SAPPageBase
@@ -15,7 +15,7 @@ class Iq09Page(SAPPageBase):
         self.n_serie_input = page.locator(locator_provider.get('form.n_serie'))
         self.results_table = page.locator(locator_provider.get('results.tabla_resultados'))
 
-        ### CAMBIO: Cargamos los locators de descarga desde el provider ###
+        # Locators para la descarga (si aplica)
         # self.download_button = page.locator(locator_provider.get('buttons.descargar_hoja'))
         # self.filename_dialog_input = page.locator(locator_provider.get('dialogs.filename_input'))
         # self.exportar_a_button = page.locator(locator_provider.get('dialogs.exportar_a'))
@@ -34,6 +34,10 @@ class Iq09Page(SAPPageBase):
     def ejecutar_informe(self):
         log.info("Ejecutando el informe de IQ09.")
         self.execute()
+
+        # XXX FIXME temporal para corregir
+        self.pause()  # DEBUG: Pausa para inspección manual
+
         self.results_table.wait_for()
         log.info("Tabla de resultados de IQ09 visible.")
 
@@ -45,6 +49,7 @@ class Iq09Page(SAPPageBase):
         Orquesta la interacción UI para iniciar la descarga usando los locators correctos.
         """
         log.info("Iniciando descarga para IQ09...")
+
         # try:
         #     with self.page.expect_download() as download_info:
         #         ### CAMBIO: Usamos los atributos de la clase, no strings hardcodeados ###

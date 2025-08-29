@@ -48,3 +48,10 @@ class SAPPageBase(PageBase):
             if field_value is not None and field_name in form_locators_map:
                 locator = form_locators_map[field_name]
                 locator.fill(str(field_value))
+
+    def pause(self):
+        """
+        Pausa la ejecución para inspección manual.
+        Útil para debugging.
+        """
+        self.page.pause()
