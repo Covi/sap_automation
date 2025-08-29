@@ -30,11 +30,10 @@ class Iq09Service:
         self._iq09_page.ejecutar_informe()
 
     def descargar_informe(self, fichero_de_salida_path: str, fichero_de_salida_nombre: str):
-        if not self._iq09_page.is_results_table_visible():
-            raise RuntimeError("No se puede descargar. La tabla de resultados de IQ09 no está visible.")
         log.info(f"Descargando informe de IQ09 en: {fichero_de_salida_path}")
         try:
-            download = self._iq09_page.descargar_informe(fichero_de_salida_nombre)
+            # Ahora esta llamada funcionará, porque la página devolverá un objeto Download válido
+            download = self._iq09_page.descargar_informe()
             download.save_as(fichero_de_salida_path)
             log.info(f"Fichero de IQ09 guardado en: {fichero_de_salida_path}")
         except Error as e:

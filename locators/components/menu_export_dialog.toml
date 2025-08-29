@@ -1,0 +1,9 @@
+# locators/components/menu_export_dialog.toml
+
+[dialog]
+radio_texto_con_tabuladores = "role=radio[name='Texto con tabuladores']"
+boton_continuar = "role=button[name='Continuar']"
+# FIXME: Este locator es frágil. Deberías mejorarlo.
+formato_dropdown = "#popupDialogFilterCbx-btn"
+opcion_hoja_calculo = "role=option[name='Archivos de hoja de cálculo']"
+boton_ok = "role=button[name='OK']"

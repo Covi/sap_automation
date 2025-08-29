@@ -30,5 +30,9 @@ class SAPMenuComponent:
         """
         log.info(f"Navegando por el menú: {' -> '.join(path)}")
         for item_text in path:
-            menu_item = self._get_menu_item(item_text).first()
+            menu_item = self._get_menu_item(item_text).first
             menu_item.click()
+
+            # AÑADE ESTA LÍNEA PARA DEPURAR EL SIGUIENTE PASO
+            # Esto pausará la ejecución justo después de cada clic en el menú.
+            self.page.pause()
