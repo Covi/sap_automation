@@ -24,7 +24,7 @@ def main() -> None:
     parser.add_argument(
         '-b', '--browser',
         type=str,
-        choices=['chromium', 'firefox', 'webkit'],
+        choices=['firefox', 'chromium', 'webkit'],
         help=f"Navegador a usar. Por defecto: {DEFAULT_BROWSER}"
     )
     parser.add_argument(
