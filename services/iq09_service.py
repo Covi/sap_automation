@@ -21,7 +21,7 @@ class Iq09Service:
         Si no necesitara descargar, se quitaría la segunda línea.
         """
         self.generar_informe(form_data)
-        self.descargar_informe(path, filename) # <- Descomentar si IQ09 descarga
+        self.descargar_informe(path, filename)
 
     def generar_informe(self, form_data: Iq09FormData):
         log.info(f"Iniciando transacción IQ09 con datos: {form_data.model_dump(exclude_none=True)}")

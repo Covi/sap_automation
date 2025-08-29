@@ -34,12 +34,9 @@ class Iq09Page(SAPPageBase):
     def ejecutar_informe(self):
         log.info("Ejecutando el informe de IQ09.")
         self.execute()
-
-        # XXX FIXME temporal para corregir
-        self.pause()  # DEBUG: Pausa para inspección manual
-
         self.results_table.wait_for()
         log.info("Tabla de resultados de IQ09 visible.")
+        self.pause()  # FIXME DEBUG: Pausa para inspección manual
 
     def is_results_table_visible(self) -> bool:
         return self.results_table.is_visible()

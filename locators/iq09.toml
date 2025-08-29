@@ -10,7 +10,7 @@ n_serie  = "[id='M0:46:::29:34']"
 [results]
 # Usamos este como placeholder. Tendrás que verificar si el ID es el
 # correcto una vez que ejecutes el informe de IQ09.
-tabla_resultados = "#userarealist0"
+tabla_resultados = 'table[ct="STCS"][role="grid"]'
 
 # NOTA: De momento no añadimos botones de descarga, etc.
 # Se pueden añadir después si son necesarios.
