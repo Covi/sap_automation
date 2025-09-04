@@ -15,7 +15,6 @@ from services.transaction_service import TransactionService
 from utils.logger import log
 
 from core.registry import TRANSACTION_REGISTRY
-# ### CAMBIO: Ya no se importan credenciales globales ###
 
 class GenericTransactionBuilder(BuilderProtocol):
     def __init__(self, transaction_name: str):
@@ -25,16 +24,36 @@ class GenericTransactionBuilder(BuilderProtocol):
         log.info(f"Builder inicializado para la transacción: {self.recipe.config_class.TRANSACTION_CODE}")
 
     def build_service(self, page: Page) -> Any:
-        common_provider = TomlLocatorProvider("locators/common.toml")
-        login_provider = TomlLocatorProvider("locators/login.toml")
-        easy_access_provider = TomlLocatorProvider("locators/easy_access.toml")
-        tx_provider = TomlLocatorProvider(self.recipe.config_class.LOCATOR_FILE)
-        
+        """
+        Construye y devuelve el servicio adecuado para la transacción.
+        """
+        project_root = Path(__file__).resolve().parent.parent.parent
+
+        # --- CAMBIOS SUGERIDOS ---
+        # Usando el operador / de pathlib, que es la forma correcta de unir rutas.
+
+        # 1. Rutas a los ficheros de locators comunes
+        common_locators_path = project_root / "locators" / "common.toml"
+        login_locators_path = project_root / "locators" / "login.toml"
+        easy_access_locators_path = project_root / "locators" / "easy_access.toml" # Errata corregida
+
+        # 2. Ruta al fichero específico de la transacción (BUG CORREGIDO)
+        tx_locator_filename = self.recipe.config_class.LOCATOR_FILE
+        tx_locators_path = project_root / tx_locator_filename
+
+        # 3. Creación de providers con las rutas absolutas y corregidas
+        common_provider = TomlLocatorProvider(common_locators_path)
+        login_provider = TomlLocatorProvider(login_locators_path)
+        easy_access_provider = TomlLocatorProvider(easy_access_locators_path)
+        tx_provider = TomlLocatorProvider(tx_locators_path)
+        # --- FIN DE CAMBIOS SUGERIDOS ---
+
         composite_easy_access = CompositeLocatorProvider([easy_access_provider, common_provider])
         composite_tx = CompositeLocatorProvider([tx_provider, common_provider])
 
         login_page = SAPLoginPage(page, locator_provider=login_provider)
         easy_access_page = SAPEasyAccessPage(page, locator_provider=composite_easy_access)
+        tx_page = self.recipe.page_class(page, locator_provider=composite_tx)
         tx_page = self.recipe.page_class(page, locator_provider=composite_tx)
 
         login_service = LoginService(login_page, easy_access_page)
