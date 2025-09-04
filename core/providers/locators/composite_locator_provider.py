@@ -1,4 +1,4 @@
-# core/providers/composite_provider.py
+# core/providers/composite_locator_provider.py
 # Composite Provider para combinar múltiples proveedores de localizadores
 
 from typing import List, Any

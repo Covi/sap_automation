@@ -1,4 +1,4 @@
-# core/providers/toml_provider.py
+# core/providers/toml_locator_provider.py
 # Proveedor de locators que lee desde un fichero TOML
 
 import toml
