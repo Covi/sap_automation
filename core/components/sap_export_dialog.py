@@ -2,7 +2,7 @@
 
 from playwright.sync_api import Page
 from utils.logger import log
-from core.providers.base_provider import BaseLocatorProvider
+from core.providers.locators.base_locator_provider import BaseLocatorProvider
 
 class SAPExportDialog:
     """

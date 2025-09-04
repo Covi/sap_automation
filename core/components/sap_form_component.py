@@ -2,7 +2,7 @@
 
 from playwright.sync_api import Page
 from pydantic import BaseModel
-from core.providers.base_provider import BaseLocatorProvider
+from core.providers.locators.base_locator_provider import BaseLocatorProvider
 from .sap_form_strategies import FormFillingStrategy
 from utils.logger import log
 

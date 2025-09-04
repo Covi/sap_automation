@@ -3,7 +3,7 @@
 from playwright.sync_api import Page, Locator
 from abc import ABC, abstractmethod
 from typing import Any
-from core.providers.base_provider import BaseLocatorProvider
+from core.providers.locators.base_locator_provider import BaseLocatorProvider
 
 class FormFillingStrategy(ABC):
     """Interfaz para definir una estrategia de rellenado de formulario."""

@@ -3,7 +3,7 @@
 
 import toml
 from typing import Dict, Any
-from .base_provider import BaseLocatorProvider
+from .base_locator_provider import BaseLocatorProvider
 
 class TomlLocatorProvider(BaseLocatorProvider):
     """
