@@ -1,5 +1,10 @@
 # Fichero: locators/zsin_ordenes.toml
 
+# --- Si preferimos por variantes que a la larga ahorrarán mucho ---
+[variantes]
+# los botones principales (Traer variante, etc) están en common, no sé si es buena idea o no
+RMC_PRINC		= role=textbox[name='InputField'][value='RMC_PRINC'] # Variante para órdenes RSTCJX01 no Eventos
+
 # --- Locators para el formulario de búsqueda ---
 [form]
 # Para los rangos, ahora definimos un array con 2 locator (desde/hasta)
