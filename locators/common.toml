@@ -1,6 +1,12 @@
 # locators/common.toml
 
 [common]
+# Botones principales
+traer_variante	= page.get_by_role("button", name="Traer variante...")
+mios 			= page.get_by_role("button", name="Propia")
+mios_fallback 	= page.get_by_title("Creados/Modificados por mí")
+
+# Botones de la barra de herramientas (toolbar)
 ejecutar       = "[id='M0:50::btn[8]']"
 continuar      = "[id='M1:50::btn[0]']"
 # El ID de la barra de estado suele ser este:
