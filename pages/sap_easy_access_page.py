@@ -1,8 +1,8 @@
 # Fichero: pages/sap_easy_access_page.py
 # Descripción: Page Object para la pantalla SAP Easy Access.
 
-from core.sap_page_base import SAPPageBase
-from core.providers.base_provider import BaseLocatorProvider
+from pages.sap_page_base import SAPPageBase
+from core.providers.locators.base_locator_provider import BaseLocatorProvider
 
 class SAPEasyAccessPage(SAPPageBase):
     """

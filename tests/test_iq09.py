@@ -7,7 +7,7 @@ from pathlib import Path
 # --- Imports necesarios ---
 from config import Iq09Config # <-- Cambio a Iq09Config
 from core.browser_manager import BrowserManager
-from core.builders.generic_builder import GenericTransactionBuilder
+from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from utils.logger import log
 
 # La fixture ahora prepara el builder para "iq09"

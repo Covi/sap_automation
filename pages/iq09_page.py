@@ -1,8 +1,8 @@
 # Fichero: pages/iq09_page.py
 
+from typing import Any
 from playwright.sync_api import Download, TimeoutError, Error
-from core.sap_page_base import SAPPageBase
-from core.providers.base_provider import BaseLocatorProvider
+from pages.sap_page_base import SAPPageBase
 from data_models.iq09_models import Iq09FormData
 from utils.logger import log
 
@@ -13,10 +13,10 @@ from core.components.sap_menu_component import SAPMenuComponent
 from core.components.sap_menu_export_dialog import SAPMenuExportDialog
 
 class Iq09Page(SAPPageBase):
-    def __init__(self, page, locator_provider: BaseLocatorProvider):
+    def __init__(self, page, locator_provider: Any):
         super().__init__(page, locator_provider)
 
-        # --- Locators propios de la página (sin cambios) ---
+        # --- Locators propios de la página ---
         self.centro_input = page.locator(locator_provider.get('form.centro'))
         self.n_serie_input = page.locator(locator_provider.get('form.n_serie'))
         self.results_table = page.locator(locator_provider.get('results.tabla_resultados'))

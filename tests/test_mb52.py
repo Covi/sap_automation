@@ -8,7 +8,7 @@ from pathlib import Path
 from config import Mb52Config
 from core.browser_manager import BrowserManager
 # 1. Importa la CLASE del builder, no una instancia
-from core.builders.generic_builder import GenericTransactionBuilder
+from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from utils.logger import log
 
 # La fixture ahora prepara el builder para "mb52"

@@ -2,7 +2,7 @@
 import argparse
 from typing import Dict, Any
 from core.browser_manager import BrowserManager
-from core.builders.generic_builder import GenericTransactionBuilder
+from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from utils.logger import log
 from config import DEFAULT_BROWSER
 

@@ -2,6 +2,7 @@
 # Proveedor de locators que lee desde un fichero TOML
 
 import toml
+from pathlib import Path
 from typing import Dict, Any
 from .base_locator_provider import BaseLocatorProvider
 
@@ -9,13 +10,20 @@ class TomlLocatorProvider(BaseLocatorProvider):
     """
     Implementación concreta que lee locators desde un fichero TOML.
     """
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str | Path):
+        """
+        Inicializa el provider con la ruta a un fichero TOML.
+        Acepta tanto una cadena de texto (str) como un objeto Path.
+        """
+        path_obj = Path(file_path)
+        
         try:
-            self._locators: Dict[str, Any] = toml.load(file_path)
+            # Usamos el objeto Path directamente, ya que toml lo soporta.
+            self._locators: Dict[str, Any] = toml.load(path_obj)
         except FileNotFoundError:
-            raise FileNotFoundError(f"El fichero de locators no se encontró en la ruta: {file_path}")
+            raise FileNotFoundError(f"El fichero de locators no se encontró en la ruta: {path_obj}")
         except Exception as e:
-            raise IOError(f"Error al leer o parsear el fichero TOML {file_path}: {e}")
+            raise IOError(f"Error al leer o parsear el fichero TOML {path_obj}: {e}")
 
     def get(self, locator_key: str) -> str:
         """

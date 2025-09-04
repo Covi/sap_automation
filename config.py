@@ -3,6 +3,7 @@
 import os
 from dotenv import load_dotenv
 from dataclasses import dataclass
+from pathlib import Path
 
 # --- Carga de entorno ---
 load_dotenv()
@@ -11,6 +12,17 @@ load_dotenv()
 SAP_BASE_URL = os.getenv("SAP_URL", "https://s4pf.refrival.com/sap/bc/gui/sap/its/webgui?sap-language=ES")
 DEFAULT_TIMEOUT = 30000
 DEFAULT_BROWSER = os.getenv("BROWSER", "firefox")
+
+# --- Definición de Rutas del Proyecto ---
+# Se define la raíz del proyecto y directorios clave para tener una única fuente de verdad.
+PROJECT_ROOT = Path(__file__).resolve().parent
+LOCATORS_DIR = PROJECT_ROOT / "locators"
+
+# Rutas a ficheros de localizadores comunes
+COMMON_LOCATORS_PATH = LOCATORS_DIR / "common.toml"
+LOGIN_LOCATORS_PATH = LOCATORS_DIR / "login.toml"
+EASY_ACCESS_LOCATORS_PATH = LOCATORS_DIR / "easy_access.toml"
+
 
 # --- Configuración del Logger ---
 @dataclass(frozen=True)
@@ -39,19 +51,22 @@ class Mb52Config(BaseConfig):
     """Configuración específica para MB52. Hereda usuario, pass y dir de descarga."""
     TRANSACTION_CODE: str = "MB52"
     EXPORT_FILENAME: str = "STOCK.xlsx"
-    LOCATOR_FILE: str = "locators/mb52.toml"
+    # CAMBIO: Ahora solo contiene el nombre del fichero. La ruta completa se construirá en la factory.
+    LOCATOR_FILE: str = "mb52.toml"
 
 @dataclass(frozen=True)
 class Iq09Config(BaseConfig):
     """Configuración específica para IQ09. Hereda usuario, pass y dir de descarga."""
     TRANSACTION_CODE: str = "IQ09"
     EXPORT_FILENAME: str = "STOCK_SERIADO.xlsx"
-    LOCATOR_FILE: str = "locators/iq09.toml"
+    # CAMBIO: Ahora solo contiene el nombre del fichero.
+    LOCATOR_FILE: str = "iq09.toml"
 
 @dataclass(frozen=True)
 class ZsinOrdenesConfig(BaseConfig):
     """Configuración para la nueva transacción ZSIN_ORDENES."""
     TRANSACTION_CODE: str = "ZSIN_ORDENES"
-    LOCATOR_FILE: str = "locators/zsin_ordenes.toml"
     DOWNLOAD_DIR: str = "/home/covi/Descargas/ordenes_sap"
     EXPORT_FILENAME: str = "smart"
+    # CAMBIO: Ahora solo contiene el nombre del fichero.
+    LOCATOR_FILE: str = "zsin_ordenes.toml"
