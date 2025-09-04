@@ -1,8 +1,8 @@
-# core/components/sap_form_component.py
+# core/form/components/sap_form_component.py
 
 from pydantic import BaseModel
 # CAMBIO: Se importa la nueva clase base.
-from .sap_component import SAPComponent
+from ..sap_component import SAPComponent
 from .sap_form_strategies import FormFillingStrategy
 from utils.logger import log
 

@@ -1,9 +1,9 @@
-# core/components/sap_menu_export_dialog.py
+# core/components/menu/sap_menu_export_dialog.py
 
 from playwright.sync_api import Download
 from utils.logger import log
 # Componente base
-from .sap_component import SAPComponent
+from .. sap_component import SAPComponent
 
 # Ahora hereda de SAPComponent.
 class SAPMenuExportDialog(SAPComponent):
@@ -13,7 +13,7 @@ class SAPMenuExportDialog(SAPComponent):
     def __init__(self, sap_page):
         # 1. Llama al constructor del padre para inicializar self.playwright_page y self._provider
         super().__init__(sap_page)
-        
+
         # 2. Añade la inicialización específica de este componente.
         #    Ahora usa los atributos heredados de SAPComponent.
         self.dialog_window = self.playwright_page.locator(self._provider.get('common.dialog_export_menu_window'))

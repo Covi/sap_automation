@@ -8,7 +8,8 @@ Las estrategias concretas permanecen en el submódulo `sap_form_strategies`.
 """
 
 # Exponemos solo la abstracción base de estrategias (si existe)
-from .sap_form_strategies import FormFillingStrategy, SimpleFillStrategy, RangeFillStrategy
+from .form.sap_form_strategies import FormFillingStrategy, SimpleFillStrategy, RangeFillStrategy
+
 from .sap_form_component import SAPFormComponent
 
 from .sap_menu_component import SAPMenuComponent
