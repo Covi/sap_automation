@@ -12,7 +12,6 @@ from core.components.form.sap_form_strategies import SimpleFillStrategy
 from core.components.menu.sap_menu_component import SAPMenuComponent
 from core.components.menu.sap_menu_export_dialog import SAPMenuExportDialog
 
-
 class Iq09Page(SAPPageBase):
     def __init__(self, page, locator_provider: Any):
         # La llamada al constructor padre sigue siendo necesaria y correcta.

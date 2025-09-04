@@ -21,6 +21,7 @@ ejecutar_title  = "role=button[title*='Ejecutar']"
 # Botón OK del diálogo de descarga/confirmación
 dialog_ok      = "role=button[name='OK']"
 
+
 # Locators para el componente menu_export_dialog
 [menu_export_dialog]
 radio_texto_con_tabuladores = "role=radio[name='Texto con tabuladores']"

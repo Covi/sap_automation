@@ -15,7 +15,6 @@ class SAPMenuExportDialog(SAPComponent):
         super().__init__(sap_page)
 
         # 2. Añade la inicialización específica de este componente.
-        #    Ahora usa los atributos heredados de SAPComponent.
         self.dialog_window = self.playwright_page.locator(self._provider.get('common.dialog_export_menu_window'))
         self.guardar_como_textbox = self.playwright_page.locator(self._provider.get('menu_export_dialog.guardar_como_textbox'))
         self.opcion_hoja_calculo = self.playwright_page.locator(self._provider.get('menu_export_dialog.opcion_hoja_calculo'))
