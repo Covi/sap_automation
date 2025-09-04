@@ -12,8 +12,8 @@ from .form.sap_form_strategies import FormFillingStrategy, SimpleFillStrategy, R
 from .form.sap_form_component import SAPFormComponent
 
 from .menu.sap_menu_component import SAPMenuComponent
-from .sap_export_dialog import SAPExportDialog
-from .menu.sap_menu_export_dialog import SAPMenuExportDialog
+from .dialog.sap_export_dialog import SAPExportDialog
+from .dialog.sap_menu_export_dialog import SAPMenuExportDialog
 
 __all__ = [
     "SAPFormComponent",

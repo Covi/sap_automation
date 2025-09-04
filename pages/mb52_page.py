@@ -9,7 +9,7 @@ from utils.logger import log
 # Componentes
 from core.components.form.sap_form_component import SAPFormComponent
 from core.components.form.sap_form_strategies import SimpleFillStrategy
-from core.components.sap_export_dialog import SAPExportDialog
+from core.components.dialog.sap_export_dialog import SAPExportDialog
 
 
 class MB52Page(SAPPageBase):
