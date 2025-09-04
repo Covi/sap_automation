@@ -4,7 +4,7 @@
 import warnings
 from playwright.sync_api import Page
 from .page_base import PageBase
-from .providers.base_provider import BaseLocatorProvider
+from .providers.locators.base_locator_provider import BaseLocatorProvider
 
 class SAPPageBase(PageBase):
     """
