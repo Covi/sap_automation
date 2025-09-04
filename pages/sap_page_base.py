@@ -1,7 +1,6 @@
 # pages/sap_page_base.py
 
-from playwright.sync_api import Page
-from .page_base import PageBase
+from .page_base import PageBase, Locator
 from core.providers.locators.base_locator_provider import BaseLocatorProvider
 
 class SAPPageBase(PageBase):
@@ -9,7 +8,7 @@ class SAPPageBase(PageBase):
     Clase base especializada para páginas de SAP.
     Introduce la dependencia del locator_provider y define elementos/métodos comunes de SAP.
     """
-    def __init__(self, page: Page, locator_provider: BaseLocatorProvider):
+    def __init__(self, page, locator_provider: BaseLocatorProvider):
         super().__init__(page)
         self._provider = locator_provider
         

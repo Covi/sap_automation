@@ -1,9 +1,9 @@
-# core/components/sap_form_strategies.py
+# core/components/form/sap_form_strategies.py
 
 from abc import ABC, abstractmethod
 from typing import Any
 # La estrategia ahora también depende de la abstracción de la página.
-from pages.sap_page_base import SAPPageBase
+from pages.sap_page_base import SAPPageBase, Locator
 
 class FormFillingStrategy(ABC):
     """

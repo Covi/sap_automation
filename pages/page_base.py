@@ -1,6 +1,6 @@
 # pages/page_base.py
 
-from playwright.sync_api import Page
+from playwright.sync_api import Page, Locator
 from config import SAP_BASE_URL
 
 class PageBase:

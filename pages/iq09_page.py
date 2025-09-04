@@ -33,10 +33,9 @@ class Iq09Page(SAPPageBase):
         # --- Mapa del Formulario ---
         # El mapa ahora usa las referencias a los locators, que se crearán
         # cuando se acceda a las propiedades del componente 'form'.
-        # FIXME estamos usando playwright_page directamente, hay que usar el provider
         self.form_map = {
-            'centro': self.form.playwright_page.locator('form.centro'),
-            'n_serie': self.form.playwright_page.locator('form.n_serie'),
+            'centro': self.playwright_page.locator(self._provider.get('form.centro')),
+            'n_serie': self.playwright_page.locator(self._provider.get('form.n_serie')),
         }
 
     def rellenar_formulario(self, data: Iq09FormData):
