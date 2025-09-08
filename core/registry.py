@@ -41,10 +41,10 @@ TRANSACTION_REGISTRY: Dict[str, TransactionRecipe] = {
         service_class=Iq09Service,
         data_model_class=Iq09FormData,
     ),
-   "zsin_ordenes": TransactionRecipe(
-       config_class=ZSIN_OrdenesConfig,
-       page_class=ZSIN_OrdenesPage,
-       service_class=ZSIN_OrdenesService,
-       data_model_class=ZSIN_OrdenesFormData,
-   ),
+#    "zsin_ordenes": TransactionRecipe(
+#        config_class=ZSIN_OrdenesConfig,
+#        page_class=ZSIN_OrdenesPage,
+#        service_class=ZSIN_OrdenesService,
+#        data_model_class=ZSIN_OrdenesFormData,
+#    ),
 }
