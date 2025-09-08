@@ -1,5 +1,10 @@
+# core/components/dialog/sap_menu_export_dialog.py
+
+# Logging
+import logging
+log = logging.getLogger(__name__)
+
 from playwright.sync_api import Download, Locator
-from utils.logger import log
 from core.components.dialog.base_dialog import BaseDialog
 
 class SAPMenuExportDialog(BaseDialog):

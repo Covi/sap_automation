@@ -1,5 +1,9 @@
 # core/components/dialog/sap_export_dialog.py
-from utils.logger import log
+
+# Logging
+import logging
+log = logging.getLogger(__name__)
+
 from .base_dialog import BaseDialog
 from playwright.sync_api import Locator
 

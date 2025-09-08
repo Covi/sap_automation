@@ -1,5 +1,9 @@
 # core/builders/generic_transaction_builder.py
 
+# Logging
+import logging
+log = logging.getLogger(__name__)
+
 from typing import Dict, Any
 from pathlib import Path
 from pydantic import ValidationError
@@ -11,7 +15,6 @@ from pages.sap_login_page import SAPLoginPage
 from pages.sap_easy_access_page import SAPEasyAccessPage
 from services.login_service import LoginService
 from services.transaction_service import TransactionService
-from utils.logger import log
 from core.registry import TRANSACTION_REGISTRY
 
 class GenericTransactionBuilder(BuilderProtocol):

@@ -1,10 +1,13 @@
-# Fichero: services/mb52_service.py
+# services/mb52_service.py
+
+# Logging
+import logging
+log = logging.getLogger(__name__)
 
 from data_models.mb52_models import Mb52FormData
 from pages.mb52_page import MB52Page
 from playwright.sync_api import Error
 from services.transaction_service import TransactionService
-from utils.logger import log
 
 class DownloadFailureError(Exception):
     pass

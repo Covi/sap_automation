@@ -1,10 +1,15 @@
+# pages/iq09_page.py
+
+# Logging
+import logging
+log = logging.getLogger(__name__)
+
 from typing import Any
 from playwright.sync_api import Download, TimeoutError, Error
 
 # El import de la clase base es correcto.
 from .sap_page_base import SAPPageBase
 from data_models.iq09_models import Iq09FormData
-from utils.logger import log
 
 # Componentes
 from core.components.form.sap_form_component import SAPFormComponent

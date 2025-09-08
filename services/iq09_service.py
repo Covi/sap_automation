@@ -1,10 +1,13 @@
-# Fichero: services/iq09_service.py
+# services/iq09_service.py
+
+# Logging
+import logging
+log = logging.getLogger(__name__)
 
 from data_models.iq09_models import Iq09FormData
 from pages.iq09_page import Iq09Page
 from playwright.sync_api import Error
 from services.transaction_service import TransactionService
-from utils.logger import log
 
 class DownloadFailureError(Exception):
     pass

@@ -1,9 +1,14 @@
 # main.py
 import argparse
+
+# Logging
+import logging
+log = logging.getLogger(__name__)
+
 from typing import Dict, Any
 from core.browser_manager import BrowserManager
 from core.builders.generic_transaction_builder import GenericTransactionBuilder
-from utils.logger import log
+from core.logging.logger_config import setup_logging
 from config import DEFAULT_BROWSER
 
 def parse_params(param_list: list[str]) -> Dict[str, Any]:
@@ -32,9 +37,19 @@ def main() -> None:
         action='store_true',
         help="Ejecuta el navegador en modo headless (sin interfaz gráfica)."
     )
+    parser.add_argument(
+        '--log-level',
+        type=str,
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        help="Nivel de log (por defecto: el definido en config)."
+    )
 
     args = parser.parse_args()
     params = parse_params(args.params)
+
+    # --- Inicializamos logging ---
+    setup_logging(log_level=args.log_level)  # usa CLI si se da, config si no
+    log.info("Iniciando ejecución de transacción...")
 
     # Decide navegador: argumento > config
     browser_type = args.browser or DEFAULT_BROWSER

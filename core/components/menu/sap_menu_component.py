@@ -1,6 +1,10 @@
+# core/components/menu/sap_menu_component.py
+
+# Logging
+import logging
+log = logging.getLogger(__name__)
+
 from playwright.sync_api import Locator
-from utils.logger import log
-# CAMBIO: Se importa la nueva clase base del componente.
 from ..sap_component import SAPComponent
 # Se importa la clase base de página para el type hinting
 from pages.sap_page_base import SAPPageBase
@@ -12,7 +16,7 @@ class SAPMenuComponent(SAPComponent):
     Su única responsabilidad es navegar a través de una ruta de menú proporcionada.
     """
     def __init__(self, sap_page: SAPPageBase):
-        # CAMBIO: Llama al constructor de la clase base.
+        # Llama al constructor de la clase base.
         super().__init__(sap_page)
 
     def _get_menu_item(self, text: str) -> Locator:
