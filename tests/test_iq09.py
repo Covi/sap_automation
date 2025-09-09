@@ -109,10 +109,10 @@ def test_run_service_with_temp_directory(iq09_builder_and_page, monkeypatch, tmp
     log.info(f"Usando directorio temporal: {temp_dir}")
 
     # Parcheamos el atributo 'DOWNLOAD_DIR' de la clase 'Iq09Config'
-    monkeypatch.setattr(Iq09Config, 'DOWNLOAD_DIR', str(temp_dir)) # <-- Cambio a Iq09Config
+    monkeypatch.setattr(Iq09Config, 'DOWNLOAD_DIR', str(temp_dir))
     
     params = {}
-    expected_file = temp_dir / Iq09Config.EXPORT_FILENAME # <-- Cambio a Iq09Config
+    expected_file = temp_dir / Iq09Config.EXPORT_FILENAME
     
     service = builder.build_service(page)
     builder.run_service(service, params)

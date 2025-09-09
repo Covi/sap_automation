@@ -4,7 +4,7 @@
 import logging
 log = logging.getLogger(__name__)
 
-from playwright.sync_api import Download, Locator
+from playwright.sync_api import Download, Locator, TimeoutError as PlaywrightTimeoutError
 from core.components.dialog.base_dialog import BaseDialog
 
 class SAPMenuExportDialog(BaseDialog):
@@ -34,7 +34,15 @@ class SAPMenuExportDialog(BaseDialog):
             self.opcion_exportar_csv.check()
             self.boton_continuar.click()
             self.nombre_archivo.click()
-            self.opcion_guardar_hoja_calculo.click()
+            try:
+                # Espera implícita de Playwright para visibilidad.
+                # Intenta el clic normal.
+                self.opcion_guardar_hoja_calculo.click(timeout=3000)
+            except PlaywrightTimeoutError:
+                log.error("El clic normal falló. Intentando con fuerza.")
+                # Si el clic normal falla, lo intentamos forzado.
+                self.opcion_guardar_hoja_calculo.click(force=True)
+
             self.boton_ok.click()
 
         log.info("Descarga iniciada a través del diálogo de exportación.")

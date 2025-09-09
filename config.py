@@ -2,7 +2,7 @@
 
 import os
 from dotenv import load_dotenv
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 # --- Carga de entorno ---
@@ -40,8 +40,19 @@ class BaseConfig:
     Configuración base inmutable con atributos compartidos por todas las transacciones.
     'frozen=True' evita que estos valores se puedan modificar por error durante la ejecución.
     """
-    SAP_USERNAME: str = os.getenv("SAP_USER")
-    SAP_PASSWORD: str = os.getenv("SAP_PASSWORD")
+    # CAMBIO: Se usa field para añadir metadatos y ocultar las credenciales
+    SAP_USERNAME: str = field(
+        default=os.getenv("SAP_USER"), 
+        metadata={'sensitive': True}, 
+        repr=False
+    )
+    SAP_PASSWORD: str = field(
+        default=os.getenv("SAP_PASSWORD"), 
+        metadata={'sensitive': True}, 
+        repr=False
+    )
+    
+    # El resto de los campos permanece igual
     DOWNLOAD_DIR: str = os.getenv("DOWNLOAD_DIR", "/home/covi/Descargas")
     DEFAULT_CENTRO: str = "E086"  # Valor por defecto común, puede ser sobrescrito
 

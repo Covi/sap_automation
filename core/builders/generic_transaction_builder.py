@@ -67,6 +67,8 @@ class GenericTransactionBuilder(BuilderProtocol):
         data_model = self.recipe.data_model_class
 
         try:
+            # FIXME Revisar que centro sea un dato más o menos genérico para todo o incluir más: sociedad, etc
+            # pero no obstante me resulta muy muy acoploado. Casi mejor no usar nada.
             default_data = {"centro": getattr(config, 'DEFAULT_CENTRO', None)}
             final_data = {k: v for k, v in default_data.items() if v is not None} | params
             datos = data_model(**final_data)
