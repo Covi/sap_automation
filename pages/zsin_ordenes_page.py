@@ -1,77 +1,99 @@
-# pages/mb52_page.py
+# pages/zsin_ordenes_page.py
 
-# Logging
 import logging
-log = logging.getLogger(__name__)
-
 from typing import Any
-from playwright.sync_api import Download, TimeoutError, Error
+from playwright.sync_api import Page, Response, TimeoutError as PlaywrightTimeoutError
 
-# El import de la clase base es correcto.
 from .sap_page_base import SAPPageBase
 from data_models.zsin_ordenes_models import ZsinOrdenesFormData
-
-# Componentes
 from core.components.form.sap_form_component import SAPFormComponent
-from core.components.form.sap_form_strategies import SimpleFillStrategy
-from core.components.dialog.sap_export_dialog import SAPExportDialog
+from core.components.form.sap_form_strategies import RangeFillStrategy
 
+log = logging.getLogger(__name__)
 
 class ZsinOrdenesPage(SAPPageBase):
-    def __init__(self, page, locator_provider: Any):
-        # La llamada a super() se encarga de todo lo relacionado con el provider.
+    def __init__(self, page: Page, locator_provider: Any):
         super().__init__(page, locator_provider)
 
-        # --- Locators propios de la página (usando self._provider heredado) ---
-        self.material_input = self.playwright_page.locator(self._provider.get('form.material'))
-        self.centro_input = self.playwright_page.locator(self._provider.get('form.centro'))
-        self.almacen_input = self.playwright_page.locator(self._provider.get('form.almacen'))
-        self.results_table = self.playwright_page.locator(self._provider.get('results.tabla_resultados'))
-        self.confirm = self.playwright_page.locator(self._provider.get('common.continuar'))
-        self.download_button = self.playwright_page.locator(self._provider.get('buttons.descargar_hoja'))
-
         # --- Componentes ---
-        # CAMBIO: Se pasa 'self' para que los componentes accedan al contexto completo.
         self.form = SAPFormComponent(self)
-        self.export_dialog = SAPExportDialog(self)
 
-        # --- Mapa del Formulario ---
-        self.form_map = {
-            'material': self.material_input,
-            'centro': self.centro_input,
-            'almacen': self.almacen_input
+        # --- Locators del Formulario (usando .get() que devuelve la lista del toml) ---
+        self.form_locators = {
+            'status': self._provider.get('form.status'),
+            'mecanico': self._provider.get('form.mecanico'),
+            'clase': self._provider.get('form.clase'),
+            'cliente': self._provider.get('form.cliente'),
+            'fechatope': self._provider.get('form.fechatope'),
+            'fechainicio': self._provider.get('form.fechainicio'),
+            'fechacreacion': self._provider.get('form.fechaicreacion')
         }
 
+        # --- Locators de Resultados ---
+        self.results_table = self.playwright_page.locator(self._provider.get('results.tabla'))
+        self.select_all_button = self.playwright_page.locator(self._provider.get('results.seleccionar_todas'))
+        self.toolbar_buttons = {
+            'reenviar': self.playwright_page.locator(self._provider.get('results.toolbar.reenviar')),
+            'imprimir': self.playwright_page.locator(self._provider.get('results.toolbar.imprimir'))
+        }
+
+        # --- Locators de Diálogo de Impresión ---
+        self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
+
     def rellenar_formulario(self, data: ZsinOrdenesFormData):
-        """
-        Rellena el formulario (componente formulario) con una estrategia de cumplimentado.
-        """
-        self.form.fill_form(data, self.form_map, strategy=SimpleFillStrategy())
+        """Rellena el formulario usando una estrategia para campos de rango."""
+        # Pydantic ya ha validado y formateado las fechas en el objeto 'data'
+        #strategy = RangeFillStrategy(separator=',') # XXX por si implementamos el separador, hay que hacer en strategy
+        strategy = RangeFillStrategy()
+        self.form.fill_form(data, self.form_locators, strategy)
 
-    def ejecutar_informe(self):
-        """
-        Ejecuta el informe y espera a que aparezca la tabla de resultados.
-        """
-        self.execute()  # Usa el método execute() heredado de SAPPageBase
+    def ejecutar_busqueda(self):
+        """Ejecuta la búsqueda y espera a que la tabla de resultados esté visible."""
+        log.info("Ejecutando la búsqueda en ZSIN_ORDENES...")
+        self.execute()  # Usa el método execute() de la clase base
+        try:
+            self.results_table.wait_for(timeout=20000)
+            log.info("Búsqueda completada. Tabla de resultados visible.")
+        except PlaywrightTimeoutError:
+            log.warning("La tabla de resultados no apareció. Es posible que no haya resultados.")
 
-        self.confirm.wait_for()
-        self.confirm.click()
-
-        self.results_table.wait_for()
-
-    def is_results_table_visible(self) -> bool:
-        """Comprueba si la tabla de resultados del informe está visible."""
+    def hay_resultados(self) -> bool:
+        """Comprueba si la tabla de resultados es visible."""
         return self.results_table.is_visible()
 
-    def descargar_hoja_calculo(self, fichero_de_salida_nombre: str) -> Download:
-        """
-        Orquesta la descarga abriendo el diálogo y delegando su gestión al componente.
-        """
+    def seleccionar_todas_las_ordenes(self):
+        """Hace clic en el botón para seleccionar todas las filas de la tabla."""
+        if self.select_all_button.is_visible():
+            log.info("Seleccionando todas las órdenes...")
+            self.select_all_button.click()
+        else:
+            log.warning("El botón para seleccionar todas las órdenes no está visible.")
+
+    def reenviar_ordenes(self):
+        """Hace clic en el botón de reenviar de la barra de herramientas."""
+        log.info("Haciendo clic en 'Reenviar'...")
+        self.toolbar_buttons['reenviar'].click()
+        # Se añade una espera simple para que SAP procese el reenvío.
+        self.playwright_page.wait_for_timeout(5000) 
+
+    def imprimir_ordenes_y_capturar_pdf(self, nombre_fichero_esperado: str) -> bytes:
+        """Inicia el proceso de impresión y captura la respuesta de red que contiene el PDF."""
+        log.info("Iniciando proceso de impresión y captura de PDF...")
         try:
-            with self.page.expect_download() as download_info:
-                self.download_button.click()
-                self.export_dialog.completar_dialogo(fichero_de_salida_nombre)
-            return download_info.value
-        except (TimeoutError, Error) as e:
-            log.error(f"El proceso de descarga para MB52 ha fallado: {e}")
+            with self.playwright_page.expect_response(
+                lambda response: nombre_fichero_esperado in response.url and "application/pdf" in response.headers.get("content-type", ""),
+                timeout=90000
+            ) as response_info:
+                self.toolbar_buttons['imprimir'].click()
+                self.print_dialog_button.wait_for()
+                self.print_dialog_button.click()
+
+            response = response_info.value
+            if response.status != 200:
+                raise ConnectionError(f"La descarga del PDF falló con status {response.status}")
+            
+            log.info("Respuesta de PDF capturada con éxito.")
+            return response.body()
+        except PlaywrightTimeoutError:
+            log.error("Timeout esperando la respuesta del PDF. El proceso de impresión falló.")
             raise
