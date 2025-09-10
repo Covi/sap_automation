@@ -1,9 +1,8 @@
-# core/providers/toml_locator_provider.py
-# Proveedor de locators que lee desde un fichero TOML
+# core/providers/locators/toml_locator_provider.py
 
 import toml
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 from .base_locator_provider import BaseLocatorProvider
 
 class TomlLocatorProvider(BaseLocatorProvider):
@@ -11,32 +10,31 @@ class TomlLocatorProvider(BaseLocatorProvider):
     Implementación concreta que lee locators desde un fichero TOML.
     """
     def __init__(self, file_path: str | Path):
-        """
-        Inicializa el provider con la ruta a un fichero TOML.
-        Acepta tanto una cadena de texto (str) como un objeto Path.
-        """
         path_obj = Path(file_path)
-        
         try:
-            # Usamos el objeto Path directamente, ya que toml lo soporta.
             self._locators: Dict[str, Any] = toml.load(path_obj)
         except FileNotFoundError:
             raise FileNotFoundError(f"El fichero de locators no se encontró en la ruta: {path_obj}")
         except Exception as e:
             raise IOError(f"Error al leer o parsear el fichero TOML {path_obj}: {e}")
 
-    def get(self, locator_key: str) -> str:
+    def get(self, locator_key: str) -> str | List[str]:
         """
-        Obtiene un locator específico usando una clave anidada con puntos.
-        Ejemplo: get('form.material')
+        Obtiene un locator o una lista de locators usando una clave anidada.
+        Ejemplo: get('form.material') -> str
+                 get('form.status')  -> List[str]
         """
         keys = locator_key.split('.')
         value = self._locators
         try:
             for key in keys:
                 value = value[key]
-            if not isinstance(value, str):
-                raise TypeError(f"El locator para '{locator_key}' no es una cadena de texto.")
+            
+            # --- CORRECCIÓN ---
+            # Ahora se permite que el valor sea un string O una lista.
+            if not isinstance(value, (str, list)):
+                raise TypeError(f"El locator para '{locator_key}' no es una cadena de texto ni una lista.")
+            
             return value
         except KeyError:
             raise KeyError(f"El locator '{locator_key}' no se encontró en el fichero.")
