@@ -1,27 +1,27 @@
 # main.py
 
-# Logging
 import logging
-log = logging.getLogger(__name__)
-
 from core.browser_manager import BrowserManager
 from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from core.logging.logger_config import setup_logging
 from core.cli_handler import CliHandler
+from core.providers.locator_provider_factory import LocatorProviderFactory
+from config import BaseConfig, SAP_BASE_URL  # <-- IMPORTA LA URL
+
+# --- IMPORTACIONES DE TU NUEVA LIBRERÍA ---
+from covi_auth_lib import LoginService, PlaywrightAdapter,  UsernamePasswordProvider
+
+log = logging.getLogger(__name__)
 
 def main() -> None:
     """Orquesta la ejecución de la aplicación."""
-    
-    # 1. Delega toda la lógica de CLI al handler
     handler = CliHandler()
     run_config = handler.handle_request()
 
-    # 2. Si el handler devuelve None, la operación ya terminó (ej: --list) o fue cancelada.
     if not run_config:
         log.info("Operación finalizada sin ejecutar transacción.")
         return
 
-    # 3. Si hay configuración, se procede con la ejecución.
     setup_logging(log_level=run_config.log_level)
     log.info(f"Iniciando transacción '{run_config.transaction_name}'...")
 
@@ -30,11 +30,39 @@ def main() -> None:
         headless=run_config.headless
     )
     page = manager.start_browser()
-
+    
     try:
+        # --- NAVEGACIÓN INICIAL ---
+        log.info(f"Navegando a la URL de SAP: {SAP_BASE_URL}")
+        page.goto(SAP_BASE_URL) # <-- AÑADE ESTA LÍNEA
+
+        # --- FLUJO DE LOGIN ---
+        factory = LocatorProviderFactory()
+        login_provider = factory.create("login.toml")
+        
+        user_selector = login_provider.get("form.input_user")
+        password_selector = login_provider.get("form.input_password")
+        submit_selector = login_provider.get("form.input_login")
+
+        adapter = PlaywrightAdapter(page)
+        auth_provider = UsernamePasswordProvider(
+            ui_adapter=adapter,
+            user_selector=user_selector,
+            password_selector=password_selector,
+            submit_selector=submit_selector
+        )
+        login_service = LoginService(provider=auth_provider)
+        
+        credentials = BaseConfig()
+        if not login_service.login(user=credentials.SAP_USERNAME, password=credentials.SAP_PASSWORD):
+            raise RuntimeError("El proceso de login ha fallado. Abortando transacción.")
+        
+        log.info("Login realizado con éxito.")
+        
         builder = GenericTransactionBuilder(run_config.transaction_name)
         service = builder.build_service(page)
         builder.run_service(service, run_config.params)
+
     except (ValueError, KeyError) as e:
         log.error(f"Error de configuración o parámetros: {e}", exc_info=True)
     except Exception as e:
