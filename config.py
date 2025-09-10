@@ -1,9 +1,9 @@
-# Fichero: config.py
-
 import os
 from dotenv import load_dotenv
 from dataclasses import dataclass, field
 from pathlib import Path
+from abc import ABC, abstractmethod
+from typing import Dict, Any
 
 # --- Carga de entorno ---
 load_dotenv()
@@ -14,7 +14,6 @@ DEFAULT_TIMEOUT = 30000
 DEFAULT_BROWSER = os.getenv("BROWSER", "firefox")
 
 # --- Definición de Rutas del Proyecto ---
-# Se define la raíz del proyecto y directorios clave para tener una única fuente de verdad.
 PROJECT_ROOT = Path(__file__).resolve().parent
 LOCATORS_DIR = PROJECT_ROOT / "locators"
 
@@ -33,14 +32,13 @@ class LogConfig:
     LOG_FILE: str = "automation.log"
     LOG_FORMAT: str = "%(asctime)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
 
-# --- 1. Se crea una clase base con los atributos comunes ---
+# --- 1. Se crea una clase base abstracta con el contrato ---
 @dataclass(frozen=True)
-class BaseConfig:
+class BaseConfig(ABC):
     """
-    Configuración base inmutable con atributos compartidos por todas las transacciones.
-    'frozen=True' evita que estos valores se puedan modificar por error durante la ejecución.
+    Configuración base inmutable con atributos compartidos y un contrato
+    para obtener los valores por defecto.
     """
-    # CAMBIO: Se usa field para añadir metadatos y ocultar las credenciales
     SAP_USERNAME: str = field(
         default=os.getenv("SAP_USER"), 
         metadata={'sensitive': True}, 
@@ -52,32 +50,55 @@ class BaseConfig:
         repr=False
     )
     
-    # El resto de los campos permanece igual
     DOWNLOAD_DIR: str = os.getenv("DOWNLOAD_DIR", "/home/covi/Descargas")
-    DEFAULT_CENTRO: str = "E086"  # Valor por defecto común, puede ser sobrescrito
 
-# --- 2. Las clases específicas ahora heredan de BaseConfig ---
+    @abstractmethod
+    def get_default_data(self) -> Dict[str, Any]:
+        """
+        Contrato que obliga a las subclases a definir explícitamente
+        sus valores por defecto para el modelo de datos.
+        """
+        pass
+
+# --- 2. Las clases específicas ahora heredan e implementan el contrato ---
 @dataclass(frozen=True)
 class Mb52Config(BaseConfig):
-    """Configuración específica para MB52. Hereda usuario, pass y dir de descarga."""
+    """Configuración específica para MB52."""
     TRANSACTION_CODE: str = "MB52"
     EXPORT_FILENAME: str = "STOCK.xlsx"
-    # CAMBIO: Ahora solo contiene el nombre del fichero. La ruta completa se construirá en la factory.
     LOCATOR_FILE: str = "mb52.toml"
+    DEFAULT_CENTRO: str = "E086"
+
+    def get_default_data(self) -> Dict[str, Any]:
+        return {
+            "centro": self.DEFAULT_CENTRO
+        }
 
 @dataclass(frozen=True)
 class Iq09Config(BaseConfig):
-    """Configuración específica para IQ09. Hereda usuario, pass y dir de descarga."""
+    """Configuración específica para IQ09."""
     TRANSACTION_CODE: str = "IQ09"
     EXPORT_FILENAME: str = "STOCK_SERIADO.xlsx"
-    # CAMBIO: Ahora solo contiene el nombre del fichero.
     LOCATOR_FILE: str = "iq09.toml"
+    DEFAULT_CENTRO: str = "E086"
+
+    def get_default_data(self) -> Dict[str, Any]:
+        # Esta transacción no tiene defaults, devuelve un dict vacío.
+        return {}
 
 @dataclass(frozen=True)
 class ZsinOrdenesConfig(BaseConfig):
-    """Configuración para la nueva transacción ZSIN_ORDENES."""
+    """Configuración para la transacción ZSIN_ORDENES."""
     TRANSACTION_CODE: str = "ZSIN_ORDENES"
     DOWNLOAD_DIR: str = "/home/covi/Descargas/ordenes_sap"
     EXPORT_FILENAME: str = "smart"
-    # CAMBIO: Ahora solo contiene el nombre del fichero.
     LOCATOR_FILE: str = "zsin_ordenes.toml"
+    DEFAULT_STATUS: str = "SE"
+    DEFAULT_CLASE: str = "ZR04,ZR05"
+    DEFAULT_CENTRO: str = "E086"
+
+    def get_default_data(self) -> Dict[str, Any]:
+        return {
+            "status": self.DEFAULT_STATUS,
+            "clase": self.DEFAULT_CLASE
+        }

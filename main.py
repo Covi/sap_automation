@@ -6,10 +6,11 @@ from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from core.logging.logger_config import setup_logging
 from core.cli_handler import CliHandler
 from core.providers.locator_provider_factory import LocatorProviderFactory
-from config import BaseConfig, SAP_BASE_URL  # <-- IMPORTA LA URL
+from core.registry import TRANSACTION_REGISTRY
+from config import SAP_BASE_URL
 
 # --- IMPORTACIONES DE TU NUEVA LIBRERÍA ---
-from covi_auth_lib import LoginService, PlaywrightAdapter,  UsernamePasswordProvider
+from covi_auth_lib import LoginService, PlaywrightAdapter, UsernamePasswordProvider
 
 log = logging.getLogger(__name__)
 
@@ -32,9 +33,12 @@ def main() -> None:
     page = manager.start_browser()
     
     try:
-        # --- NAVEGACIÓN INICIAL ---
         log.info(f"Navegando a la URL de SAP: {SAP_BASE_URL}")
-        page.goto(SAP_BASE_URL) # <-- AÑADE ESTA LÍNEA
+        page.goto(SAP_BASE_URL)
+
+        # --- Obtener la config concreta ANTES del login ---
+        recipe = TRANSACTION_REGISTRY[run_config.transaction_name]
+        config = recipe.config_class()
 
         # --- FLUJO DE LOGIN ---
         factory = LocatorProviderFactory()
@@ -53,12 +57,12 @@ def main() -> None:
         )
         login_service = LoginService(provider=auth_provider)
         
-        credentials = BaseConfig()
-        if not login_service.login(user=credentials.SAP_USERNAME, password=credentials.SAP_PASSWORD):
+        if not login_service.login(user=config.SAP_USERNAME, password=config.SAP_PASSWORD):
             raise RuntimeError("El proceso de login ha fallado. Abortando transacción.")
         
         log.info("Login realizado con éxito.")
         
+        # --- FLUJO DE TRANSACCIÓN ---
         builder = GenericTransactionBuilder(run_config.transaction_name)
         service = builder.build_service(page)
         builder.run_service(service, run_config.params)
