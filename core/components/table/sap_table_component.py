@@ -40,10 +40,10 @@ class SAPTableComponent(SAPComponent):
         else:
             log.warning("El botón para seleccionar todas las filas no está visible.")
 
-    def click_toolbar_button(self, button_name: str):
+    def click_toolbar_button(self, button_name: str, exact: bool=True):
         log.info(f"Intentando hacer clic en el botón '{button_name}' de la barra de herramientas.")
         try:
-            button_locator = self.table_locator.get_by_role("button", name=button_name, exact=True)
+            button_locator = self.table_locator.get_by_role("button", name=button_name, exact=exact)
             button_locator.click()
             log.info(f"Clic en el botón '{button_name}' realizado con éxito.")
         except Exception as e:

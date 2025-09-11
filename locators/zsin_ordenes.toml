@@ -27,9 +27,13 @@ seleccionar_todas = "role=columnheader[name='Columna de selección de filas']"
 [results.toolbar]
 # FIXME: Estos locators por 'accesskey' son frágiles. Es mucho mejor usar el texto visible.
 # Ejemplo: asignar = "role=button[name='Asignar']"
+# Pero ahora mismo no son necesarios porque nuestra tabla usa un método propio para botones del modo:
+# get_by_role("button", name=button_name, exact=True)
+imprimir = "role=button[name='IMPRESIÓN']"
+
 asignar = "[accesskey='A']"
 reenviar = "[accesskey='R']"
-imprimir = "[accesskey='I']"
+#imprimir = "[accesskey='I']"
 ver_log = "[accesskey='O']"
 exportar_datos = "[title*='Exportar datos']"
 

@@ -45,11 +45,12 @@ class ZsinOrdenesPage(SAPPageBase):
 
     def _esperar_resultados(self, timeout: int = 10) -> None:
         log.debug(f"Esperando hasta {timeout} segundos a que aparezca la tabla de resultados...")
+
         # Primero esperamos a que desaparezca el indicador de carga de SAP
+        # FIXME Esto no funca
         self._loading_disappear(timeout=timeout * 1000)
         # Luego esperamos a que la tabla sea visible
         self.results_table.is_visible(timeout=timeout * 1000)
-
 
     def rellenar_formulario(self, data: ZsinOrdenesFormData):
         strategy = RangeFillStrategy()
@@ -72,14 +73,18 @@ class ZsinOrdenesPage(SAPPageBase):
         self.results_table.click_toolbar_button("Reenviar")
         self.playwright_page.wait_for_timeout(5000)
 
-    def imprimir_ordenes_y_capturar_pdf(self, nombre_fichero_esperado: str) -> bytes:
+    def imprimir_ordenes(self):
+        self.results_table.click_toolbar_button("IMPRESIÓN")
+        self.playwright_page.wait_for_timeout(5000)
+
+    def decargar_pdf(self, nombre_fichero_esperado: str) -> bytes:
         log.info("Iniciando proceso de impresión y captura de PDF...")
         try:
             with self.playwright_page.expect_response(
                 lambda response: nombre_fichero_esperado in response.url and "application/pdf" in response.headers.get("content-type", ""),
                 timeout=90000
             ) as response_info:
-                self.results_table.click_toolbar_button("Impr.")
+                self.imprimir_ordenes()
                 self.print_dialog_button.wait_for()
                 self.print_dialog_button.click()
 

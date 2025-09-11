@@ -27,6 +27,7 @@ class ZsinOrdenesService:
             if not self._page.hay_resultados():
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
                 return
+
             self._page.seleccionar_todas_las_ordenes()
 
             if form_data.reenviar:
@@ -35,8 +36,8 @@ class ZsinOrdenesService:
 
             if form_data.imprimir:
                 log.info("Ejecutando acción: Imprimir órdenes.")
-                pdf_bytes = self._page.imprimir_ordenes_y_capturar_pdf(self._config.EXPORT_FILENAME)
-                
+                pdf_bytes = self._page.decargar_pdf(self._config.EXPORT_FILENAME)
+
                 # El servicio se encarga de la lógica de guardado y nombrado del fichero
                 directorio_descarga = path.parent
                 directorio_descarga.mkdir(parents=True, exist_ok=True)
