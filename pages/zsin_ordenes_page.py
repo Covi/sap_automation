@@ -33,14 +33,23 @@ class ZsinOrdenesPage(SAPPageBase):
             'fechainicio': [self.playwright_page.locator(loc) for loc in self._provider.get('form.fechainicio')],
             'fechacreacion': [self.playwright_page.locator(loc) for loc in self._provider.get('form.fechaicreacion')]
         }
+
         self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
 
-    def _esperar_resultados(self, timeout: int = 10) -> None:
+    def _esperar_resultados_old(self, timeout: int = 10) -> None:
         log.debug(f"Esperando hasta {timeout} segundos a que aparezca la tabla de resultados...")
         self.results_table.table_locator.wait_for(
             state="visible", 
             timeout=timeout * 1000  # pasar de segundos a ms
         )
+
+    def _esperar_resultados(self, timeout: int = 10) -> None:
+        log.debug(f"Esperando hasta {timeout} segundos a que aparezca la tabla de resultados...")
+        # Primero esperamos a que desaparezca el indicador de carga de SAP
+        self._loading_disappear(timeout=timeout * 1000)
+        # Luego esperamos a que la tabla sea visible
+        self.results_table.is_visible(timeout=timeout * 1000)
+
 
     def rellenar_formulario(self, data: ZsinOrdenesFormData):
         strategy = RangeFillStrategy()
@@ -53,8 +62,8 @@ class ZsinOrdenesPage(SAPPageBase):
         self._esperar_resultados(timeout=30)
 
     def hay_resultados(self) -> bool:
-        """Indica si la tabla tiene resultados."""
-        return self.results_table.is_visible()
+        """Indica si la tabla tiene resultados reales."""
+        return self.results_table.get_total_row_count_robust() > 0
 
     def seleccionar_todas_las_ordenes(self):
         self.results_table.select_all()

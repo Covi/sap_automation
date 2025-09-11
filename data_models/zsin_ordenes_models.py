@@ -19,7 +19,7 @@ class ZsinOrdenesFormData(BaseModel):
     fechainicio: Optional[str] = Field(default=None)
     fechatope: Optional[str] = Field(default=None)
     fechacreacion: Optional[str] = Field(default=None)
-    
+
     # --- Flags de Comportamiento ---
     imprimir: bool = False
     reenviar: bool = False
@@ -39,7 +39,7 @@ class ZsinOrdenesFormData(BaseModel):
             
         return fecha_dt.strftime("%d.%m.%Y")
 
-    # --- NUEVO: Validador de Modelo (root_validator en Pydantic v1) ---
+    # Validador de Modelo (root_validator en Pydantic v1) ---
     @model_validator(mode='after')
     def validar_al_menos_un_filtro(self) -> 'ZsinOrdenesFormData':
         """
