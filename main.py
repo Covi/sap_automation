@@ -6,7 +6,7 @@ from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from core.logging.logger_config import setup_logging
 from core.cli_handler import CliHandler
 from core.providers.locator_provider_factory import LocatorProviderFactory
-from config import BaseConfig, SAP_BASE_URL  # <-- IMPORTA LA URL
+from config import BaseConfig, BASE_URL
 
 # --- IMPORTACIONES DE TU NUEVA LIBRERÍA ---
 from covi_auth_lib import LoginService, PlaywrightAdapter,  UsernamePasswordProvider
@@ -33,8 +33,8 @@ def main() -> None:
     
     try:
         # --- NAVEGACIÓN INICIAL ---
-        log.info(f"Navegando a la URL de SAP: {SAP_BASE_URL}")
-        page.goto(SAP_BASE_URL) # <-- AÑADE ESTA LÍNEA
+        log.info(f"Navegando a la URL de SAP: {BASE_URL}")
+        page.goto(BASE_URL)
 
         # --- FLUJO DE LOGIN ---
         factory = LocatorProviderFactory()

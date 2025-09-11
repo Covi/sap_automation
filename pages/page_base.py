@@ -1,7 +1,9 @@
 # pages/page_base.py
 
-from playwright.sync_api import Page, Locator
-from config import SAP_BASE_URL
+# FIXME Debemos abstraernos de Playwright?
+# por type hiting los no usados
+from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeoutError
+from config import BASE_URL
 
 class PageBase:
     """
@@ -12,15 +14,16 @@ class PageBase:
         if not isinstance(page, Page):
             raise TypeError("Se esperaba un objeto Page de Playwright.")
         self.page = page
-        self.base_url = SAP_BASE_URL
+        self.base_url = BASE_URL
 
+    # FIXME Debemos abstraernos de Playwright?
     @property
     def playwright_page(self) -> Page:
         """Propiedad que expone de forma segura el objeto Page de Playwright."""
         return self.page
 
     # --- Métodos Genéricos de Interacción ---
-
+    # FIXME Debemos abstraernos de Playwright?
     def navigate(self, path: str = ""):
         """Navega a la URL base más la ruta específica."""
         full_url = self.base_url + path

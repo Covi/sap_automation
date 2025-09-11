@@ -3,7 +3,7 @@
 # --- Si preferimos por variantes que a la larga ahorrarán mucho ---
 [variantes]
 # los botones principales (Traer variante, etc) están en common, no sé si es buena idea o no
-RMC_PRINC		= "role=textbox[name='InputField'][value='RMC_PRINC']" # Variante para órdenes RSTCJX01 no Eventos
+RMC_PRINC       = "role=textbox[name='InputField'][value='RMC_PRINC']" # Variante para órdenes RSTCJX01 no Eventos
 
 # --- Locators para el formulario de búsqueda ---
 [form]
@@ -19,9 +19,9 @@ fechaicreacion = ['//*[@id="M0:46:::27:34"]', '//*[@id="M0:46:::27:59"]']
 
 # --- Locators para la pantalla de resultados ---
 [results]
-# FIXME: Este ID es probablemente dinámico. Un locator como 'table[role="grid"]' sería más robusto.
-tabla = "#C101"
-seleccionar_todas = "#grid#C101#0,0-SELCOLTOGGLE"
+# Se reemplazan IDs, que pueden ser dinámicos, por locators de rol robusto.
+tabla = "role=grid"
+seleccionar_todas = "role=columnheader[name='Columna de selección de filas']"
 
 # --- Locators para la barra de herramientas de la tabla de resultados ---
 [results.toolbar]

@@ -24,11 +24,9 @@ class ZsinOrdenesService:
             self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
             self._page.rellenar_formulario(form_data)
             self._page.ejecutar_busqueda()
-
             if not self._page.hay_resultados():
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
                 return
-
             self._page.seleccionar_todas_las_ordenes()
 
             if form_data.reenviar:

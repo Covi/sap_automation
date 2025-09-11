@@ -12,7 +12,7 @@ class ZsinOrdenesFormData(BaseModel):
     
     # --- Campos del Formulario con Valores por Defecto ---
     # Si no se proporciona un valor, se usarán estos para ejecuciones desatendidas.
-    status: Optional[str] = Field(default='SE')
+    status: Optional[str] = Field(default='SE,')
     clase: Optional[str] = Field(default='ZR04,ZR05')
     cliente: Optional[str] = Field(default=None)
     mecanico: Optional[str] = Field(default=None)

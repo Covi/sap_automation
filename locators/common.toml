@@ -16,6 +16,10 @@ traer_variante  = "role=button[name='Traer variante...']"
 variante_mios            = "role=button[name='Propia']"
 boton_mios_fallback   = "role=button[title='Creados/Modificados por mí']"
 
+# FIXME hay que hacerlo un componente
+# [loading_box]
+cargando = "*[id='ur-loading-box']"
+
 # Locators para el componente export_dialog
 [export_dialog]
 filename_input = "role=textbox[name='Nom.arch. :']"
