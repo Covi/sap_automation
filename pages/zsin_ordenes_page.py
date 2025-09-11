@@ -2,7 +2,7 @@
 
 import logging
 from typing import Any
-from playwright.sync_api import Page, Response, TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import Page, Response, TimeoutError as PlaywrightTimeoutError, Locator
 
 from .sap_page_base import SAPPageBase
 from data_models.zsin_ordenes_models import ZsinOrdenesFormData
@@ -18,8 +18,8 @@ class ZsinOrdenesPage(SAPPageBase):
         # --- Componentes ---
         self.form = SAPFormComponent(self)
 
-        # --- Locators del Formulario (usando .get() que devuelve la lista del toml) ---
-        self.form_locators = {
+        # --- Locators del Formulario (se obtienen los strings del .toml) ---
+        raw_form_locators = {
             'status': self._provider.get('form.status'),
             'mecanico': self._provider.get('form.mecanico'),
             'clase': self._provider.get('form.clase'),
@@ -27,6 +27,13 @@ class ZsinOrdenesPage(SAPPageBase):
             'fechatope': self._provider.get('form.fechatope'),
             'fechainicio': self._provider.get('form.fechainicio'),
             'fechacreacion': self._provider.get('form.fechaicreacion')
+        }
+        
+        # --- SOLUCIÓN: La página cumple su responsabilidad de crear los objetos Locator ---
+        # Se convierte cada string de la lista en un objeto Locator de Playwright.
+        self.form_locators: dict[str, list[Locator]] = {
+            key: [self.playwright_page.locator(loc) for loc in loc_list]
+            for key, loc_list in raw_form_locators.items()
         }
 
         # --- Locators de Resultados ---
@@ -42,15 +49,13 @@ class ZsinOrdenesPage(SAPPageBase):
 
     def rellenar_formulario(self, data: ZsinOrdenesFormData):
         """Rellena el formulario usando una estrategia para campos de rango."""
-        # Pydantic ya ha validado y formateado las fechas en el objeto 'data'
-        #strategy = RangeFillStrategy(separator=',') # XXX por si implementamos el separador, hay que hacer en strategy
         strategy = RangeFillStrategy()
         self.form.fill_form(data, self.form_locators, strategy)
 
     def ejecutar_busqueda(self):
         """Ejecuta la búsqueda y espera a que la tabla de resultados esté visible."""
         log.info("Ejecutando la búsqueda en ZSIN_ORDENES...")
-        self.execute()  # Usa el método execute() de la clase base
+        self.execute()
         try:
             self.results_table.wait_for(timeout=20000)
             log.info("Búsqueda completada. Tabla de resultados visible.")
@@ -73,7 +78,6 @@ class ZsinOrdenesPage(SAPPageBase):
         """Hace clic en el botón de reenviar de la barra de herramientas."""
         log.info("Haciendo clic en 'Reenviar'...")
         self.toolbar_buttons['reenviar'].click()
-        # Se añade una espera simple para que SAP procese el reenvío.
         self.playwright_page.wait_for_timeout(5000) 
 
     def imprimir_ordenes_y_capturar_pdf(self, nombre_fichero_esperado: str) -> bytes:

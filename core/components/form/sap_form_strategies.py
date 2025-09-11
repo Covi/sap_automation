@@ -1,7 +1,8 @@
 # core/components/form/sap_form_strategies.py
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, List
+
 # La estrategia ahora también depende de la abstracción de la página.
 from pages.sap_page_base import SAPPageBase, Locator
 
@@ -32,7 +33,7 @@ class SimpleFillStrategy(FormFillingStrategy):
         Implementación concreta del rellenado simple.
         """
         # Obtiene el locator del mapa
-        locator = form_map[field]
+        locator: Locator = form_map[field]
         
         # Usa el objeto playwright_page del contexto para realizar la acción
         # de Playwright, en lugar de recibirlo como un parámetro suelto.
@@ -43,32 +44,31 @@ class RangeFillStrategy(FormFillingStrategy):
     
     def fill(self, sap_page: SAPPageBase, form_map: dict, field: str, value: Any):
         """
-        Implementación concreta para rellenar campos de rango.
+        Implementación concreta y estricta para rellenar campos de rango.
         """
-        partes = str(value).split(',')
-        desde_val = partes[0].strip()
-        hasta_val = partes[1].strip() if len(partes) > 1 else ""
-
-        locator_or_key = form_map[field]
-        
-        # Inyecta el proveedor de localizadores del contexto de la página
-        locator_provider = sap_page._provider
-
-        if isinstance(locator_or_key, str):
-            locators = locator_provider.get(locator_or_key)
-        elif isinstance(locator_or_key, list) and all(isinstance(loc, Locator) for loc in locator_or_key):
-            locators = locator_or_key
-        else:
-            raise TypeError(
-                f"Tipo de locator inesperado para el campo de rango '{field}'. "
-                f"Se esperaba 'str' o una lista de 'Locator'."
+        # 1. Valida que el valor de entrada tenga formato de rango.
+        if ',' not in str(value):
+            raise ValueError(
+                f"El valor para el campo de rango '{field}' es inválido. "
+                f"Se esperaba un formato 'desde,hasta', pero se recibió '{value}'."
             )
-        
-        # Usa el objeto playwright_page del contexto
+
+        # 2. Valida que el mapa de locators sea una lista de 2 elementos.
+        locators: List[Locator] = form_map[field]
+        if not isinstance(locators, list) or len(locators) != 2:
+            raise TypeError(
+                f"La estrategia de rango para el campo '{field}' esperaba una lista de 2 Locators."
+            )
+
+        # 3. Procesa los valores y los asigna a los locators.
+        partes = str(value).split(',', 1)
+        desde_val = partes[0].strip()
+        hasta_val = partes[1].strip()
+
         if desde_val:
-            sap_page.playwright_page.locator(locators[0]).fill(desde_val)
+            locators[0].fill(desde_val)
         if hasta_val:
-            sap_page.playwright_page.locator(locators[1]).fill(hasta_val)
+            locators[1].fill(hasta_val)
 
 # Aquí podrías añadir futuras estrategias más complejas, como...
 # class DropdownFillStrategy(FormFillingStrategy):
