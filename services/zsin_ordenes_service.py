@@ -28,13 +28,15 @@ class ZsinOrdenesService:
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
                 return
 
-            self._page.seleccionar_todas_las_ordenes()
-
             if form_data.reenviar:
+                log.info("Ejecutando acción: Selecionar todas las órdenes.")
+                self._page.seleccionar_todas_las_ordenes()
                 log.info("Ejecutando acción: Reenviar órdenes.")
                 self._page.reenviar_ordenes()
 
             if form_data.imprimir:
+                log.info("Ejecutando acción: Selecionar todas las órdenes.")
+                self._page.seleccionar_todas_las_ordenes()
                 log.info("Ejecutando acción: Imprimir órdenes.")
                 pdf_bytes = self._page.decargar_pdf(self._config.EXPORT_FILENAME)
 

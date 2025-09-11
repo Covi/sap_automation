@@ -58,7 +58,7 @@ class ZsinOrdenesPage(SAPPageBase):
 
     def ejecutar_busqueda(self):
         """Hace clic en el botón de búsqueda, sin esperar resultados."""
-        log.info("Ejecutando búsqueda en ZSIN_ORDENES...")
+        log.debug("Ejecutando búsqueda en ZSIN_ORDENES...")
         self.execute()
         self._esperar_resultados(timeout=30)
 
@@ -78,7 +78,7 @@ class ZsinOrdenesPage(SAPPageBase):
         self.playwright_page.wait_for_timeout(5000)
 
     def decargar_pdf(self, nombre_fichero_esperado: str) -> bytes:
-        log.info("Iniciando proceso de impresión y captura de PDF...")
+        log.debug("Iniciando proceso de impresión y captura de PDF...")
         try:
             with self.playwright_page.expect_response(
                 lambda response: nombre_fichero_esperado in response.url and "application/pdf" in response.headers.get("content-type", ""),
@@ -92,8 +92,8 @@ class ZsinOrdenesPage(SAPPageBase):
             if response.status != 200:
                 raise ConnectionError(f"La descarga del PDF falló con status {response.status}")
             
-            log.info("Respuesta de PDF capturada con éxito.")
+            log.debug("Respuesta de PDF capturada con éxito.")
             return response.body()
         except PlaywrightTimeoutError:
-            log.error("Timeout esperando la respuesta del PDF. El proceso de impresión falló.")
+            log.debug("Timeout esperando la respuesta del PDF. El proceso de impresión falló.")
             raise
