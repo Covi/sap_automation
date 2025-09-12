@@ -1,8 +1,11 @@
 # core/logging/logger_config.py
 
-import logging
+import logging, warnings
 import sys
 from config import LogConfig  # sigues usando tu config en raíz
+
+# Redirige las advertencias del módulo 'warnings' al sistema de logging
+logging.captureWarnings(True)
 
 def setup_logging(log_level: str | None = None):
     """

@@ -40,8 +40,12 @@ class GenericTransactionBuilder(BuilderProtocol):
 
         # Composición de los servicios de la transacción
         transaction_service = TransactionService(easy_access_page)
-        trx_service = self.recipe.service_class(transaction_service, trx_page)
-        
+        trx_service = self.recipe.service_class(
+            transaction_service,
+            trx_page,
+            **(self.recipe.extra_dependencies or {})
+        )
+
         return trx_service
 
     def run_service(self, service: Any, params: Dict[str, Any]) -> None:

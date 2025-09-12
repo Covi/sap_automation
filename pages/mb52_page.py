@@ -42,11 +42,12 @@ class MB52Page(SAPPageBase):
             'almacen': self.almacen_input
         }
 
-    def rellenar_formulario(self, data: Mb52FormData):
+    def rellenar_formulario(self, payload: dict):
         """
-        Rellena el formulario (componente formulario) con una estrategia de cumplimentado.
+        Rellena el formulario (componente formulario) con una estrategia de cumplimentado 
+        a partir de un payload (dict) pre-formateado
         """
-        self.form.fill_form(data, self.form_map, strategy=SimpleFillStrategy())
+        self.form.fill_form(payload, self.form_map, strategy=SimpleFillStrategy())
 
     def ejecutar_informe(self):
         """

@@ -2,7 +2,7 @@
 # Descripción: Registro central de transacciones para evitar importaciones circulares.
 
 from dataclasses import dataclass
-from typing import Dict, Type, Any
+from typing import Any, Dict, Optional, Type
 
 # --- Importa las clases de configuración desde config.py ---
 from config import Mb52Config, Iq09Config, ZsinOrdenesConfig
@@ -20,6 +20,11 @@ from pages.zsin_ordenes_page import ZsinOrdenesPage
 from data_models.zsin_ordenes_models import ZsinOrdenesFormData
 from services.zsin_ordenes_service import ZsinOrdenesService
 
+# --- Dependencias extra ---
+from utils.file_handler import FileHandler
+from utils.print_service import PrintService
+
+
 # --- Define la "Receta" genérica ---
 @dataclass
 class TransactionRecipe:
@@ -28,6 +33,7 @@ class TransactionRecipe:
     page_class: Type
     service_class: Type
     data_model_class: Type
+    extra_dependencies: Optional[Dict[str, Any]] = None  # <--- opcional
 
 
 # --- Registra cada transacción con su receta ---
@@ -49,5 +55,9 @@ TRANSACTION_REGISTRY: Dict[str, TransactionRecipe] = {
        page_class=ZsinOrdenesPage,
        service_class=ZsinOrdenesService,
        data_model_class=ZsinOrdenesFormData,
+       extra_dependencies={  # <--- aquí defines lo que el builder debe inyectar
+           "file_handler": FileHandler(),
+           "print_service": PrintService()
+        }
    ),
 }

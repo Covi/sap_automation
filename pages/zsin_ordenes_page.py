@@ -62,9 +62,13 @@ class ZsinOrdenesPage(SAPPageBase):
         self.execute()
         self._esperar_resultados(timeout=30)
 
+    def obtener_resultados(self) -> int:
+        """Retorna la cantidad de resultados."""
+        return self.results_table.get_total_row_count()
+
     def hay_resultados(self) -> bool:
         """Indica si la tabla tiene resultados reales."""
-        return self.results_table.get_total_row_count_robust() > 0
+        return self.obtener_resultados() > 0
 
     def seleccionar_todas_las_ordenes(self):
         self.results_table.select_all()
@@ -77,7 +81,7 @@ class ZsinOrdenesPage(SAPPageBase):
         self.results_table.click_toolbar_button("IMPRESIÓN")
         self.playwright_page.wait_for_timeout(5000)
 
-    def decargar_pdf(self, nombre_fichero_esperado: str) -> bytes:
+    def descargar_pdf(self, nombre_fichero_esperado: str) -> bytes:
         log.debug("Iniciando proceso de impresión y captura de PDF...")
         try:
             with self.playwright_page.expect_response(
