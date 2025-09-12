@@ -51,10 +51,13 @@ class BaseConfig:
         metadata={'sensitive': True}, 
         repr=False
     )
-    
+
     # El resto de los campos permanece igual
     DOWNLOAD_DIR: str = os.getenv("DOWNLOAD_DIR", "/home/covi/Descargas")
     DEFAULT_CENTRO: str = "E086"  # Valor por defecto común, puede ser sobrescrito
+    # Formato de fecha global
+    DATE_FORMAT: str = "%d.%m.%Y"
+
 
 # --- 2. Las clases específicas ahora heredan de BaseConfig ---
 @dataclass(frozen=True)

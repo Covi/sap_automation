@@ -1,25 +1,33 @@
-# core/components/form/sap_form_component.py
+# Fichero: core/components/form/sap_form_component.py (Versión SOLID)
 
-# Logging
 import logging
-log = logging.getLogger(__name__)
-
-from pydantic import BaseModel
+from typing import Dict
 from ..sap_component import SAPComponent
 from .sap_form_strategies import FormFillingStrategy
 
+log = logging.getLogger(__name__)
+
 class SAPFormComponent(SAPComponent):
     """
-    Gestiona el rellenado de campos de un formulario utilizando una estrategia.
-    Hereda el contexto de la página (page y provider) de SAPComponent.
+    Componente "tonto" que rellena un formulario a partir de un diccionario simple.
+    Está completamente desacoplado de los modelos de datos.
     """
-    # Constructor del padre.
+
     def __init__(self, sap_page):
         super().__init__(sap_page)
 
-    def fill_form(self, data: BaseModel, form_map: dict, strategy: FormFillingStrategy):
+    def fill_form(self, payload: Dict, form_map: dict, strategy: FormFillingStrategy):
+        """
+        Rellena un formulario desde un payload (diccionario).
+
+        Args:
+            payload: Diccionario simple con los datos a rellenar.
+            form_map: Diccionario que mapea los campos a los locators.
+            strategy: La estrategia de rellenado a utilizar.
+        """
         log.info(f"Rellenando formulario con la estrategia: {strategy.__class__.__name__}")
-        for field, value in data.model_dump(exclude_none=True).items():
-            if field in form_map:
-                # Usa self.sap_page, que se hereda de SAPComponent.
+
+        # Itera directamente sobre el diccionario, filtrando valores nulos.
+        for field, value in payload.items():
+            if value is not None and field in form_map:
                 strategy.fill(self.sap_page, form_map, field, value)

@@ -9,7 +9,8 @@ from data_models.zsin_ordenes_models import ZsinOrdenesFormData
 from services.transaction_service import TransactionService
 from pages.zsin_ordenes_page import ZsinOrdenesPage
 from config import ZsinOrdenesConfig
-
+# --- 1. Se importa el builder genérico que sabe cómo transformar los datos ---
+from core.builders.sap_payload_builder import SapPayloadBuilder
 log = logging.getLogger(__name__)
 
 class ZsinOrdenesService:
@@ -22,7 +23,15 @@ class ZsinOrdenesService:
         """Orquesta el flujo completo de la transacción ZSIN_ORDENES."""
         try:
             self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
-            self._page.rellenar_formulario(form_data)
+
+            # --- 2. El servicio usa el builder para crear un payload simple ---
+            payload = SapPayloadBuilder.build_payload(form_data)
+            
+            # --- 3. Se pasa el payload (dict), no el modelo Pydantic, a la página ---
+            self._page.rellenar_formulario(payload)
+
+            self._page.pause() # FIXME
+
             self._page.ejecutar_busqueda()
             if not self._page.hay_resultados():
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")

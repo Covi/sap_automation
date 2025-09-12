@@ -3,9 +3,6 @@
 import logging
 from typing import Any
 
-# Modelo
-from data_models.zsin_ordenes_models import ZsinOrdenesFormData
-
 # POM
 from .sap_page_base import SAPPageBase, PlaywrightTimeoutError
 from core.components.form.sap_form_component import SAPFormComponent
@@ -52,9 +49,12 @@ class ZsinOrdenesPage(SAPPageBase):
         # Luego esperamos a que la tabla sea visible
         self.results_table.is_visible(timeout=timeout * 1000)
 
-    def rellenar_formulario(self, data: ZsinOrdenesFormData):
+    def rellenar_formulario(self, payload: dict):
+        """
+        Rellena el formulario a partir de un payload (dict) pre-formateado.
+        """
         strategy = RangeFillStrategy()
-        self.form.fill_form(data, self.form_locators, strategy)
+        self.form.fill_form(payload, self.form_locators, strategy)
 
     def ejecutar_busqueda(self):
         """Hace clic en el botón de búsqueda, sin esperar resultados."""
