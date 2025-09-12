@@ -1,21 +1,36 @@
-# utils/file_handler.py
-
 import os
 import time
 import shutil
 import tempfile
 from pathlib import Path
 from datetime import datetime
-from typing import Any
-
+from typing import Any, Tuple
 
 class FileHandler:
     @staticmethod
-    def save_with_timestamp(file_bytes: bytes, destino: Path, filename: str) -> Path:
-        """Guarda un fichero en destino añadiendo timestamp al nombre."""
+    def _prepare_destination(destino: Path, filename: str) -> Tuple[Path, str]:
+        """
+        Prepara el destino creando el directorio y limpiando el nombre del fichero.
+        Esto centraliza la lógica común y evita la repetición (DRY).
+        """
         destino.mkdir(parents=True, exist_ok=True)
+        # BUG FIX: Se extrae solo el nombre para evitar crear subdirectorios.
+        clean_filename = Path(filename).name
+        return destino, clean_filename
+
+    @staticmethod
+    def save_with_timestamp(file_bytes: bytes, destino: Path, filename: str) -> Path:
+        """
+        Guarda un fichero en destino añadiendo timestamp al nombre.
+        No crea subdirectorios si filename viene con rutas.
+        """
+        destino, clean_filename = FileHandler._prepare_destination(destino, filename)
+
+        base_name = Path(clean_filename).stem
+        ext = Path(clean_filename).suffix
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        final_name = f"{Path(filename).stem}_{timestamp}.pdf"
+        final_name = f"{base_name}_{timestamp}{ext}"
+
         final_path = destino / final_name
 
         with open(final_path, "wb") as f:
@@ -26,11 +41,15 @@ class FileHandler:
     @staticmethod
     def save_from_download(download: Any, destino: Path, filename: str) -> Path:
         """Mueve un fichero descargado por navegador a destino con nombre fijo."""
-        destino.mkdir(parents=True, exist_ok=True)
+        destino, clean_filename = FileHandler._prepare_destination(destino, filename)
+        
         temp_file_path = Path(tempfile.gettempdir()) / download.suggested_filename
         download.save_as(str(temp_file_path))
 
-        final_path = destino / filename
+        final_path = destino / clean_filename
+        
+        # shutil.move sobreescribe, por lo que el `if/remove` puede ser redundante,
+        # pero se mantiene por seguridad en todos los casos.
         if final_path.exists():
             os.remove(final_path)
 

@@ -68,6 +68,10 @@ class ZsinOrdenesService:
                 return
             log.info(f"✅ Se encontraron {total} resultados.")
 
+            # FIXME esto no es semánticamente correcto porque esto no es form data, pero es que el payload, 
+            # el modelo ni siquiera debería ser form data sino simplemente data model
+            # self._page.pause()
+
             # 5. Reenviar órdenes si corresponde
             if getattr(form_data, "reenviar", False):
                 log.info("Acción: Reenviar órdenes.")
@@ -84,7 +88,8 @@ class ZsinOrdenesService:
                 self._page.seleccionar_todas_las_ordenes()
 
                 # Obtener PDF y guardarlo
-                pdf_bytes = self._page.descargar_pdf(self._config.EXPORT_FILENAME)
+                log.debug(f"Esperando fichero de descarga que contenga: '{filename}'")
+                pdf_bytes = self._page.descargar_pdf(filename)
                 pdf_path = self._file_handler.save_with_timestamp(pdf_bytes, path, filename)
                 log.debug(f"✅ PDF guardado con éxito en: {pdf_path.resolve()}")
 
