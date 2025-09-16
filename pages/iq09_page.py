@@ -1,68 +1,60 @@
-# pages/iq09_page.py
-
-# Logging
 import logging
-log = logging.getLogger(__name__)
+from typing import Any, Dict
 
-from typing import Any
 from playwright.sync_api import Download, TimeoutError, Error
 
-# El import de la clase base es correcto.
-from .sap_page_base import SAPPageBase
-from schemas.iq09 import Iq09FormData
+from .sap_report_page import SAPReportPage
 
-# Componentes
-from core.components.form.sap_form_component import SAPFormComponent
-from core.components.form.sap_form_strategies import SimpleFillStrategy
+# Componentes y Estrategias
+from core.components.form.sap_form_strategies import SimpleFillStrategy, FormFillingStrategy
 from core.components.menu.sap_menu_component import SAPMenuComponent
 from core.components.dialog.sap_menu_export_dialog import SAPMenuExportDialog
 
-class Iq09Page(SAPPageBase):
+log = logging.getLogger(__name__)
+
+class Iq09Page(SAPReportPage):
+    """
+    Page Object Model para la transacción IQ09 de SAP.
+    Hereda la lógica común de informes de SAPReportPage.
+    """
     def __init__(self, page, locator_provider: Any):
-        # La llamada al constructor padre sigue siendo necesaria y correcta.
         super().__init__(page, locator_provider)
 
-        # --- Locators propios de la página ---
-        # Ahora el locator de la tabla de resultados se crea aquí,
-        # pero los otros se inyectan en los componentes.
-        # FIXME estamos usando playwright_page directamente, hay que usar el provider
+        # --- Definición de componentes y locators específicos de IQ09 ---
         self.results_table = self.playwright_page.locator(self._provider.get('results.tabla_resultados'))
-
-        # --- Componentes ---
-        # Simplemente les pasamos 'self' (la propia instancia de Iq09Page) como contexto.
-        self.form = SAPFormComponent(self)
         self.menu = SAPMenuComponent(self)
         self.export_dialog = SAPMenuExportDialog(self)
 
-        # --- Mapa del Formulario ---
-        # El mapa ahora usa las referencias a los locators, que se crearán
-        # cuando se acceda a las propiedades del componente 'form'.
-        self.form_locators = {
+    # --- Implementación de las propiedades abstractas obligatorias ---
+
+    @property
+    def form_locators(self) -> Dict[str, Any]:
+        """Provee el mapa de locators del formulario para la clase base."""
+        return {
             'centro': self.playwright_page.locator(self._provider.get('form.centro')),
             'n_serie': self.playwright_page.locator(self._provider.get('form.n_serie')),
         }
 
-    def rellenar_formulario(self, payload: dict):
-        """
-        Rellena el formulario a partir de un payload (dict) pre-formateado.
-        """
-        self.form.fill_form(payload, self.form_locators, strategy=SimpleFillStrategy())
+    @property
+    def fill_strategy(self) -> FormFillingStrategy:
+        """Provee la estrategia de rellenado para la clase base."""
+        return SimpleFillStrategy()
 
-    def ejecutar_informe(self):
-        # Este método ahora usa el componente de formulario para ejecutar la acción,
-        # en lugar de heredarla directamente de SAPPageBase.
-        log.info("Ejecutando el informe de IQ09.")
-        # Usa el método heredado de SAPPageBase.
-        super().execute() 
-        self.results_table.wait_for()
+    # --- Implementación de los métodos abstractos obligatorios ---
+
+    def _esperar_resultados(self, timeout: int = 30000):
+        """Implementa la lógica de espera específica de IQ09."""
+        self.results_table.wait_for(timeout=timeout)
         log.debug("Tabla de resultados de IQ09 visible.")
 
+    # --- Métodos específicos de IQ09 que se mantienen ---
+
     def is_results_table_visible(self) -> bool:
-        # Este método no necesita cambios.
+        """Comprueba si la tabla de resultados del informe está visible."""
         return self.results_table.is_visible()
 
     def descargar_informe(self) -> Download:
-        # Este método no necesita cambios, ya que delega en los componentes.
+        """Inicia la descarga a través de la navegación por el menú de SAP."""
         log.info("Iniciando descarga para IQ09 a través del menú SAP...")
         try:
             self.menu.navigate_to("Menú", "Lista", "Grabar", "Fichero...")

@@ -1,27 +1,34 @@
-# pages/zsin_ordenes_page.py
-
 import logging
-from typing import Any
+from typing import Any, Dict
 
-# POM
-from .sap_page_base import SAPPageBase, PlaywrightTimeoutError
-from core.components.form.sap_form_component import SAPFormComponent
-from core.components.form.sap_form_strategies import RangeFillStrategy
+from .sap_report_page import SAPReportPage # <-- Herencia actualizada
+from .sap_page_base import PlaywrightTimeoutError
+
+# Componentes y Estrategias
+from core.components.form.sap_form_strategies import RangeFillStrategy, FormFillingStrategy
 from core.components.table.sap_table_component import SAPTableComponent
 
 log = logging.getLogger(__name__)
 
-class ZsinOrdenesPage(SAPPageBase):
-    def __init__(self, page: SAPPageBase, locator_provider: Any):
+class ZsinOrdenesPage(SAPReportPage):
+    """
+    Page Object Model para la transacción ZSIN_ORDENES de SAP.
+    Hereda la lógica común de informes de SAPReportPage.
+    """
+    def __init__(self, page: SAPReportPage, locator_provider: Any):
         super().__init__(page, locator_provider)
 
-        # --- Componentes ---
-        self.form = SAPFormComponent(self)
+        # --- Definición de componentes y locators específicos de ZSIN_ORDENES ---
         table_main_locator = self.playwright_page.locator(self._provider.get('results.tabla'))
         self.results_table = SAPTableComponent(self, table_main_locator)
+        self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
 
-        # --- Locators de la página ---
-        self.form_locators = {
+    # --- Implementación de las propiedades abstractas obligatorias ---
+
+    @property
+    def form_locators(self) -> Dict[str, Any]:
+        """Provee el mapa de locators del formulario para la clase base."""
+        return {
             'status': [self.playwright_page.locator(loc) for loc in self._provider.get('form.status')],
             'mecanico': [self.playwright_page.locator(loc) for loc in self._provider.get('form.mecanico')],
             'clase': [self.playwright_page.locator(loc) for loc in self._provider.get('form.clase')],
@@ -30,37 +37,26 @@ class ZsinOrdenesPage(SAPPageBase):
             'fechainicio': [self.playwright_page.locator(loc) for loc in self._provider.get('form.fechainicio')],
             'fechacreacion': [self.playwright_page.locator(loc) for loc in self._provider.get('form.fechaicreacion')]
         }
+    
+    @property
+    def fill_strategy(self) -> FormFillingStrategy:
+        """Provee la estrategia de rellenado para la clase base."""
+        return RangeFillStrategy()
 
-        self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
+    # --- Implementación de los métodos abstractos obligatorios ---
 
-    def _esperar_resultados_old(self, timeout: int = 10) -> None:
-        log.debug(f"Esperando hasta {timeout} segundos a que aparezca la tabla de resultados...")
-        self.results_table.table_locator.wait_for(
-            state="visible", 
-            timeout=timeout * 1000  # pasar de segundos a ms
-        )
+    def _esperar_resultados(self, timeout: int = 30000) -> None:
+        """Implementa la lógica de espera específica de ZSIN_ORDENES."""
+        log.debug(f"Esperando hasta {timeout / 1000} segundos a que aparezca la tabla de resultados...")
+        # FIXME: Esto no funca
+        self._loading_disappear(timeout=timeout)
+        self.results_table.is_visible(timeout=timeout)
 
-    def _esperar_resultados(self, timeout: int = 10) -> None:
-        log.debug(f"Esperando hasta {timeout} segundos a que aparezca la tabla de resultados...")
+    # --- Métodos que DESAPARECEN al ser heredados ---
+    # rellenar_formulario()
+    # ejecutar_reporte() (antes se llamaba ejecutar_busqueda)
 
-        # Primero esperamos a que desaparezca el indicador de carga de SAP
-        # FIXME Esto no funca
-        self._loading_disappear(timeout=timeout * 1000)
-        # Luego esperamos a que la tabla sea visible
-        self.results_table.is_visible(timeout=timeout * 1000)
-
-    def rellenar_formulario(self, payload: dict):
-        """
-        Rellena el formulario a partir de un payload (dict) pre-formateado.
-        """
-        strategy = RangeFillStrategy()
-        self.form.fill_form(payload, self.form_locators, strategy)
-
-    def ejecutar_busqueda(self):
-        """Hace clic en el botón de búsqueda, sin esperar resultados."""
-        log.debug("Ejecutando búsqueda en ZSIN_ORDENES...")
-        self.execute()
-        self._esperar_resultados(timeout=30)
+    # --- Métodos específicos de ZSIN_ORDENES que se mantienen ---
 
     def obtener_resultados(self) -> int:
         """Retorna la cantidad de resultados."""
@@ -82,6 +78,7 @@ class ZsinOrdenesPage(SAPPageBase):
         self.playwright_page.wait_for_timeout(5000)
 
     def descargar_pdf(self, nombre_fichero_esperado: str) -> bytes:
+        """Captura la respuesta de red que contiene el PDF de impresión."""
         log.debug("Iniciando proceso de impresión y captura de PDF...")
         try:
             with self.playwright_page.expect_response(

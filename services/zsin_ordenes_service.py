@@ -53,7 +53,7 @@ class ZsinOrdenesService:
             self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
             payload = SapPayloadBuilder.build_payload(criteria)
             self._page.rellenar_formulario(payload)
-            self._page.ejecutar_busqueda()
+            self._page.ejecutar()
             total = self._page.obtener_resultados()
 
             # TODO FIXME DEBUG self._page.pause()

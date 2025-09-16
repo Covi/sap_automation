@@ -42,7 +42,7 @@ class Iq09Service:
         log.debug(f"Iniciando transacción IQ09 con datos: {form_data.model_dump(exclude_none=True)}")
         payload = self.payload.build_payload(form_data)
         self._page.rellenar_formulario(payload)
-        self._page.ejecutar_informe()
+        self._page.ejecutar()
 
     def descargar_informe(self, fichero_de_salida_path: str, fichero_de_salida_nombre: str):
         if not self._page.is_results_table_visible():

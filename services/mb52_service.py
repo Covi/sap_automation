@@ -42,7 +42,7 @@ class MB52Service:
     def generar_informe(self, form_data: Mb52FormData):
         payload = self.payload.build_payload(form_data)
         self._page.rellenar_formulario(payload)
-        self._page.ejecutar_informe()
+        self._page.ejecutar()
 
     def descargar_informe(self, fichero_de_salida_path: Path, fichero_de_salida_nombre: str):
         if not self._page.is_results_table_visible():
