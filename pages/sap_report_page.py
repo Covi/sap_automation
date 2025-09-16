@@ -48,6 +48,11 @@ class SAPReportPage(SAPPageBase, ABC):
         """
         raise NotImplementedError
 
+    def esperar_formulario(self, timeout: int = 30000):
+        """Esperar a que el formulario esté listo antes de rellenarlo."""
+        for locator in self.form_locators.values():
+            self.page.wait_for_selector(locator[0], timeout=timeout)
+
     def rellenar_formulario(self, payload: dict):
         """
         Método común para rellenar el formulario.

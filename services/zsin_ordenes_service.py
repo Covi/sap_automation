@@ -51,7 +51,11 @@ class ZsinOrdenesService:
         """
         try:
             self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
+
+            # Modelo
             payload = SapPayloadBuilder.build_payload(criteria)
+
+            #self._page.esperar_formulario()
             self._page.rellenar_formulario(payload)
             self._page.ejecutar()
             total = self._page.obtener_resultados()
