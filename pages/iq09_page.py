@@ -9,7 +9,7 @@ from playwright.sync_api import Download, TimeoutError, Error
 
 # El import de la clase base es correcto.
 from .sap_page_base import SAPPageBase
-from data_models.iq09_models import Iq09FormData
+from schemas.iq09 import Iq09FormData
 
 # Componentes
 from core.components.form.sap_form_component import SAPFormComponent
@@ -29,7 +29,6 @@ class Iq09Page(SAPPageBase):
         self.results_table = self.playwright_page.locator(self._provider.get('results.tabla_resultados'))
 
         # --- Componentes ---
-        # CAMBIO CLAVE: La instanciación de componentes ahora es mucho más limpia.
         # Simplemente les pasamos 'self' (la propia instancia de Iq09Page) como contexto.
         self.form = SAPFormComponent(self)
         self.menu = SAPMenuComponent(self)
@@ -38,14 +37,16 @@ class Iq09Page(SAPPageBase):
         # --- Mapa del Formulario ---
         # El mapa ahora usa las referencias a los locators, que se crearán
         # cuando se acceda a las propiedades del componente 'form'.
-        self.form_map = {
+        self.form_locators = {
             'centro': self.playwright_page.locator(self._provider.get('form.centro')),
             'n_serie': self.playwright_page.locator(self._provider.get('form.n_serie')),
         }
 
-    def rellenar_formulario(self, data: Iq09FormData):
-        # Este método no necesita cambios, ya que delega en el componente 'form'.
-        self.form.fill_form(data, self.form_map, strategy=SimpleFillStrategy())
+    def rellenar_formulario(self, payload: dict):
+        """
+        Rellena el formulario a partir de un payload (dict) pre-formateado.
+        """
+        self.form.fill_form(payload, self.form_locators, strategy=SimpleFillStrategy())
 
     def ejecutar_informe(self):
         # Este método ahora usa el componente de formulario para ejecutar la acción,

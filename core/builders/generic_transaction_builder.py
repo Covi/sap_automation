@@ -1,5 +1,3 @@
-# core/builders/generic_transaction_builder.py
-
 import logging
 from typing import Dict, Any
 from pathlib import Path
@@ -15,7 +13,16 @@ from core.registry import TRANSACTION_REGISTRY
 log = logging.getLogger(__name__)
 
 class GenericTransactionBuilder(BuilderProtocol):
+    """
+    Builder genérico capaz de construir y ejecutar cualquier servicio de transacción
+    registrado en el TRANSACTION_REGISTRY.
+    """
     def __init__(self, transaction_name: str):
+        """
+        Inicializa el builder para una transacción específica.
+
+        :param transaction_name: El nombre de la transacción a construir (ej: 'zsin_ordenes').
+        """
         if transaction_name not in TRANSACTION_REGISTRY:
             raise ValueError(f"Transacción '{transaction_name}' no reconocida o no registrada.")
         
@@ -26,19 +33,17 @@ class GenericTransactionBuilder(BuilderProtocol):
 
     def build_service(self, page: Page) -> Any:
         """
-        Construye y devuelve el servicio para la transacción.
-        YA NO SE ENCARGA DEL LOGIN.
+        Construye el servicio para la transacción a partir de su receta.
+        Inyecta las dependencias necesarias como páginas y servicios auxiliares.
         """
         easy_access_provider = self.provider_factory.create("easy_access.toml")
         
         trx_locator_filename = self.recipe.config_class.LOCATOR_FILE
         trx_provider = self.provider_factory.create(trx_locator_filename)
 
-        # Construcción de páginas necesarias para la transacción
         easy_access_page = SAPEasyAccessPage(page, locator_provider=easy_access_provider)
         trx_page = self.recipe.page_class(page, locator_provider=trx_provider)
 
-        # Composición de los servicios de la transacción
         transaction_service = TransactionService(easy_access_page)
         trx_service = self.recipe.service_class(
             transaction_service,
@@ -50,26 +55,49 @@ class GenericTransactionBuilder(BuilderProtocol):
 
     def run_service(self, service: Any, params: Dict[str, Any]) -> None:
         """
-        Ejecuta el servicio con los datos y configuración proporcionados.
+        Ejecuta el servicio con los parámetros proporcionados por la CLI.
+        Construye los schemas de criterios y opciones a partir de la receta.
         """
         config = self.recipe.config_class
-        data_model = self.recipe.data_model_class
+        criteria_schema = self.recipe.criteria_schema
+        options_schema = self.recipe.options_schema  # Puede ser None
 
         try:
+            # Construye el schema de criterios, aplicando valores por defecto del config
             default_data = {"centro": getattr(config, 'DEFAULT_CENTRO', None)}
-            final_data = {k: v for k, v in default_data.items() if v is not None} | params
-            datos = data_model(**final_data)
-        except ValidationError as e:
-            log.error(f"Error de validación en los parámetros: {e}")
-            raise ValueError("Parámetros de entrada inválidos.") from e
+            final_criteria_data = {k: v for k, v in default_data.items() if v is not None} | params
+            criteria = criteria_schema(**final_criteria_data)
 
-        downloads_dir = Path(config.DOWNLOAD_DIR)
-        downloads_dir.mkdir(parents=True, exist_ok=True)
-        filename = params.get("output") or config.EXPORT_FILENAME
-        path_fichero = downloads_dir / filename
+        except ValidationError as e:
+            log.error(f"Error de validación en los parámetros de criterios: {e}")
+            raise ValueError("Parámetros de entrada para criterios inválidos.") from e
+
+        log.info(f"Iniciando {config.TRANSACTION_CODE} con los criterios: {criteria.model_dump(exclude_none=True)}")
+
+        # --- LÓGICA CONDICIONAL ---
+        # Decide cómo llamar al servicio basándose en si la receta define un schema de opciones.
+        if options_schema:
+            # CASO NUEVO (ej: zsin_ordenes): El servicio espera 'criteria' y 'options'.
+            try:
+                # Prepara los datos para el schema de opciones, obteniendo valores del config y de la CLI.
+                options_data = params.copy()
+                options_data['output_path'] = Path(config.DOWNLOAD_DIR)
+                options_data['output_filename'] = params.get("output") or config.EXPORT_FILENAME
+                options = options_schema(**options_data)
+                
+            except ValidationError as e:
+                log.error(f"Error de validación en los parámetros de opciones: {e}")
+                raise ValueError("Parámetros de entrada para opciones inválidos.") from e
+            
+            service.run(criteria=criteria, options=options)
         
-        log.info(f"Iniciando {config.TRANSACTION_CODE} con los datos: {datos.model_dump(exclude_none=True)}")
-        
-        service.run(form_data=datos, path=path_fichero, filename=filename)
+        else:
+            # CASO ANTIGUO (ej: mb52): El servicio espera 'form_data', 'path' y 'filename'.
+            downloads_dir = Path(config.DOWNLOAD_DIR)
+            downloads_dir.mkdir(parents=True, exist_ok=True)
+            filename = params.get("output") or config.EXPORT_FILENAME
+            path_fichero = downloads_dir / filename
+            
+            service.run(form_data=criteria, path=path_fichero, filename=filename)
         
         log.info(f"Proceso de {config.TRANSACTION_CODE} completado.")

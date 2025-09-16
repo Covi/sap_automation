@@ -40,7 +40,7 @@ class BaseConfig:
     Configuración base inmutable con atributos compartidos por todas las transacciones.
     'frozen=True' evita que estos valores se puedan modificar por error durante la ejecución.
     """
-    # CAMBIO: Se usa field para añadir metadatos y ocultar las credenciales
+    # Se usa field para añadir metadatos y ocultar las credenciales
     SAP_USERNAME: str = field(
         default=os.getenv("SAP_USER"), 
         metadata={'sensitive': True}, 
@@ -65,7 +65,6 @@ class Mb52Config(BaseConfig):
     """Configuración específica para MB52. Hereda usuario, pass y dir de descarga."""
     TRANSACTION_CODE: str = "MB52"
     EXPORT_FILENAME: str = "STOCK.xlsx"
-    # CAMBIO: Ahora solo contiene el nombre del fichero. La ruta completa se construirá en la factory.
     LOCATOR_FILE: str = "mb52.toml"
 
 @dataclass(frozen=True)
@@ -73,7 +72,6 @@ class Iq09Config(BaseConfig):
     """Configuración específica para IQ09. Hereda usuario, pass y dir de descarga."""
     TRANSACTION_CODE: str = "IQ09"
     EXPORT_FILENAME: str = "STOCK_SERIADO.xlsx"
-    # CAMBIO: Ahora solo contiene el nombre del fichero.
     LOCATOR_FILE: str = "iq09.toml"
 
 @dataclass(frozen=True)
@@ -82,5 +80,4 @@ class ZsinOrdenesConfig(BaseConfig):
     TRANSACTION_CODE: str = "ZSIN_ORDENES"
     DOWNLOAD_DIR: str = "/home/covi/Descargas/ordenes_sap"
     EXPORT_FILENAME: str = "smart"
-    # CAMBIO: Ahora solo contiene el nombre del fichero.
     LOCATOR_FILE: str = "zsin_ordenes.toml"

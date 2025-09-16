@@ -9,7 +9,7 @@ from playwright.sync_api import Download, TimeoutError, Error
 
 # El import de la clase base es correcto.
 from .sap_page_base import SAPPageBase
-from data_models.mb52_models import Mb52FormData
+from schemas.mb52 import Mb52FormData
 
 # Componentes
 from core.components.form.sap_form_component import SAPFormComponent
@@ -36,7 +36,7 @@ class MB52Page(SAPPageBase):
         self.export_dialog = SAPExportDialog(self)
 
         # --- Mapa del Formulario ---
-        self.form_map = {
+        self.form_locators = {
             'material': self.material_input,
             'centro': self.centro_input,
             'almacen': self.almacen_input
@@ -47,7 +47,7 @@ class MB52Page(SAPPageBase):
         Rellena el formulario (componente formulario) con una estrategia de cumplimentado 
         a partir de un payload (dict) pre-formateado
         """
-        self.form.fill_form(payload, self.form_map, strategy=SimpleFillStrategy())
+        self.form.fill_form(payload, self.form_locators, strategy=SimpleFillStrategy())
 
     def ejecutar_informe(self):
         """

@@ -6,7 +6,7 @@ from pathlib import Path
 from config import Mb52Config
 from pages.mb52_page import MB52Page, Error
 from services.transaction_service import TransactionService
-from data_models.mb52_models import Mb52FormData
+from schemas.mb52 import Mb52FormData
 
 from core.builders.sap_payload_builder import SapPayloadBuilder
 
@@ -45,10 +45,10 @@ class MB52Service:
         self._page.ejecutar_informe()
 
     def descargar_informe(self, fichero_de_salida_path: Path, fichero_de_salida_nombre: str):
-        # Este método se mantiene sin cambios
         if not self._page.is_results_table_visible():
             raise RuntimeError("No se puede descargar. La tabla de resultados no está visible.")
         log.info(f"Descargando informe en: {fichero_de_salida_path}")
+
         try:
             download = self._page.descargar_hoja_calculo(fichero_de_salida_nombre)
             download.save_as(fichero_de_salida_path)
