@@ -52,6 +52,8 @@ class ZsinOrdenesService:
         try:
             self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
 
+            # TODO FIXME DEBUG self._page.pause()
+
             # Modelo
             payload = SapPayloadBuilder.build_payload(criteria)
 

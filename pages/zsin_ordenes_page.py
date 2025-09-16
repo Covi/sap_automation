@@ -85,7 +85,7 @@ class ZsinOrdenesPage(SAPReportPage):
                 timeout=90000
             ) as response_info:
                 self.imprimir_ordenes()
-                self.print_dialog_button.wait_for()
+                self.print_dialog_button.wait_for() # FIXME creo que esto es redundante
                 self.print_dialog_button.click()
 
             response = response_info.value
