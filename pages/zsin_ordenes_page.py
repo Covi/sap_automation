@@ -52,10 +52,6 @@ class ZsinOrdenesPage(SAPReportPage):
         self._loading_disappear(timeout=timeout)
         self.results_table.is_visible(timeout=timeout)
 
-    # --- Métodos que DESAPARECEN al ser heredados ---
-    # rellenar_formulario()
-    # ejecutar_reporte() (antes se llamaba ejecutar_busqueda)
-
     # --- Métodos específicos de ZSIN_ORDENES que se mantienen ---
 
     def obtener_resultados(self) -> int:
