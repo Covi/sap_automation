@@ -22,7 +22,9 @@ class ZsinOrdenesPage(SAPReportPage):
         # --- Definición de componentes y locators específicos de ZSIN_ORDENES ---
         table_main_locator = self.playwright_page.locator(self._provider.get('results.tabla'))
         base_table = SAPTableComponent(self, table_main_locator)
-        self.results_table = GridViewDecorator(base_table, table_main_locator)
+        self.results_table = GridViewDecorator(base_table)
+
+        self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
 
     # --- Implementación de las propiedades abstractas obligatorias ---
 

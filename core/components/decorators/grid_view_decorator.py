@@ -1,29 +1,25 @@
-# core/components/decorators/gridview.py
-
-import json, logging
+import json
+import logging
 from typing import Optional, Dict, Any
-from pages.sap_page_base import Locator  # para type hint
+from ..interfaces.component_with_locator import ComponentWithLocator
 
 log = logging.getLogger(__name__)
 
 class GridViewDecorator:
     """
-    Decorador que añade capacidades de GridView a un componente SAP.
-    No asume que el componente base es una tabla: solo interpreta metadatos
-    de tipo GuiGridView si están presentes en el atributo `lsdata`.
+    Decorador que añade capacidades de GridView a un componente que
+    implementa ComponentWithLocator.
     """
 
-    def __init__(self, component, locator: Locator):
+    def __init__(self, component: ComponentWithLocator):
         self._component = component
-        self._locator = locator
         self._metadata_cache: Optional[Dict[str, Any]] = None
 
     def _get_metadata_object(self) -> Optional[Dict[str, Any]]:
-        """Busca el objeto de metadatos GridView en `lsdata`."""
         if self._metadata_cache:
             return self._metadata_cache
 
-        lsdata_str = self._locator.get_attribute("lsdata")
+        lsdata_str = self._component.table_locator.get_attribute("lsdata")
         if not lsdata_str:
             log.warning("El atributo 'lsdata' no fue encontrado en el componente.")
             return None
@@ -41,7 +37,6 @@ class GridViewDecorator:
         return None
 
     def get_total_row_count(self) -> int:
-        """Devuelve el número total de filas según los metadatos GridView."""
         metadata = self._get_metadata_object()
         if metadata:
             total_rows = metadata.get("totalRows", 0)
@@ -50,5 +45,5 @@ class GridViewDecorator:
         return 0
 
     def __getattr__(self, name):
-        """Delegación al componente original para no perder sus métodos."""
+        """Delegación automática al componente base."""
         return getattr(self._component, name)
