@@ -18,6 +18,7 @@ class SAPReportPage(SAPPageBase, ABC):
     def __init__(self, page, locator_provider: Any):
         super().__init__(page, locator_provider)
         self.form = SAPFormComponent(self)
+
         # La tabla de resultados es un concepto común, pero cada hijo 
         # debe definir e inicializar su locator o componente específico.
         self.results_table = None 
@@ -47,6 +48,16 @@ class SAPReportPage(SAPPageBase, ABC):
         lógica de espera para los resultados tras una ejecución.
         """
         raise NotImplementedError
+
+    def hay_resultados(self) -> bool:
+        """
+        Método común que comprueba si la tabla de resultados tiene filas.
+        Delega la llamada al componente de tabla.
+        """
+        if self.results_table:
+            return self.results_table.get_total_row_count() > 0
+        log.warning("results_table no está inicializado. No se puede comprobar si hay resultados.")
+        return False
 
     def rellenar_formulario(self, payload: dict):
         """

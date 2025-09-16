@@ -1,129 +1,116 @@
-# core/components/table/sap_table_component.py
-
-import json, logging, warnings
+import json
+import logging
 from typing import Optional, Dict, Any
 
-# Se importa la clase base de página para el type hinting y el componente base
 from pages.sap_page_base import SAPPageBase, Locator
 from ..sap_component import SAPComponent
 
 log = logging.getLogger(__name__)
 
+
 class SAPTableComponent(SAPComponent):
     """
-    Componente genérico que encapsula la lógica de interacción con una tabla
-    de resultados de SAP (específicamente un control GuiGridView).
+    Componente de tabla base, CONCRETO y FUNCIONAL.
+    Proporciona implementaciones básicas que funcionan en la mayoría de tablas
+    (ej: contando elementos visibles del DOM). No es abstracta.
     """
-
     def __init__(self, sap_page: SAPPageBase, table_locator: Locator):
         super().__init__(sap_page)
         self.table_locator = table_locator
-        self.select_all_header = self.table_locator.get_by_role(
-            "columnheader", name="Columna de selección de filas"
-        )
+
+    def wait_for_table(self, timeout: float = 30000):
+        """Implementación base: espera a que el contenedor sea visible."""
+        log.debug("Esperando a que el contenedor de la tabla sea visible...")
+        self.table_locator.wait_for(state="visible", timeout=timeout)
+        log.debug("Contenedor de tabla visible.")
+
+    def get_total_row_count(self) -> int:
+        """Implementación base: cuenta las filas visibles en el DOM."""
+        count = self.table_locator.locator("div[ct='ALT']").count()
+        log.debug(f"(Método base) Se han encontrado {count} filas visibles.")
+        return count
+
+    def select_all(self):
+        """Implementación base: no hace nada, ya que no hay un método universal."""
+        log.warning("La operación 'select_all' no está soportada por la tabla base.")
+        pass
+
+    def click_toolbar_button(self, button_name: str, exact: bool = True):
+        """Implementación base: no hace nada."""
+        log.warning(f"La operación 'click_toolbar_button' para '{button_name}' no está soportada por la tabla base.")
+        pass
+
+
+class GridViewDecorator(SAPTableComponent):
+    """
+    DECORADOR: Envuelve un componente de tabla para añadirle las funcionalidades
+    específicas del control 'GuiGridView' (leer metadatos, usar botones específicos).
+    """
+    def __init__(self, table_component: SAPTableComponent):
+        # El decorador CONTIENE (envuelve) una instancia de la tabla base.
+        super().__init__(table_component.sap_page, table_component.table_locator)
+        self._component_wrapped = table_component
+        
+        # Lógica y selectores específicos de GridView
+        self.select_all_button = self.table_locator.locator("[id$='-sa']")
         self._metadata_cache: Optional[Dict[str, Any]] = None
 
     def _get_metadata_object(self) -> Optional[Dict[str, Any]]:
-        """
-        Método privado para encontrar y cachear el objeto de metadatos de la tabla.
-        Busca por su "firma" en lugar de por una clave fija.
-        """
-        if self._metadata_cache:
-            return self._metadata_cache
-
-        log.info("Buscando metadatos de la tabla en el atributo 'lsdata'.")
+        """Encuentra y cachea el objeto de metadatos 'GuiGridView' de la tabla."""
+        if self._metadata_cache: return self._metadata_cache
         lsdata_str = self.table_locator.get_attribute("lsdata")
-        if not lsdata_str:
-            log.warning("El atributo 'lsdata' no fue encontrado en la tabla.")
-            return None
-
+        if not lsdata_str: return None
         try:
             data = json.loads(lsdata_str)
             for value in data.values():
                 if isinstance(value, dict) and value.get("Type") == "GuiGridView":
-                    log.debug("Objeto de metadatos de GuiGridView encontrado.")
                     self._metadata_cache = value
                     return self._metadata_cache
-            
-            log.warning("No se encontró un objeto de metadatos de tipo 'GuiGridView' en 'lsdata'.")
             return None
-
         except json.JSONDecodeError:
-            log.error("No se pudo decodificar el JSON del atributo 'lsdata'.")
             return None
 
-    def is_visible(self, timeout: Optional[float] = 20000) -> bool:
-        log.debug(f"Comprobando visibilidad de la tabla: {self.table_locator}")
-        try:
-            self.table_locator.wait_for(state="visible", timeout=timeout)
-            log.debug("Tabla visible.")
-            return True
-        except Exception:
-            log.warning("La tabla no se ha hecho visible en el tiempo esperado.")
-            return False
+    # --- MÉTODOS MEJORADOS (OVERRIDE) ---
+
+    def wait_for_table(self, timeout: float = 30000):
+        """Versión mejorada: espera a que una celda de datos sea visible."""
+        log.debug("Esperando a que la tabla GuiGridView sea visible...")
+        self.table_locator.wait_for(state="visible", timeout=timeout)
+        self.table_locator.get_by_role("gridcell").first.wait_for(state="visible", timeout=timeout)
+        log.debug("Tabla GuiGridView visible y con celdas.")
+
+    def get_total_row_count(self) -> int:
+        """
+        Versión mejorada: intenta leer los metadatos. Si falla, delega
+        la llamada al componente base que está envolviendo (fallback).
+        """
+        metadata = self._get_metadata_object()
+        if metadata:
+            total_rows = metadata.get("totalRows", 0)
+            if total_rows > 0:
+                log.debug(f"(Desde metadatos) La tabla reporta un total de {total_rows} filas.")
+                return int(total_rows)
+        
+        # Fallback: si no hay metadatos, llama al método original del objeto envuelto
+        log.warning("No se pudo obtener el total de filas desde metadatos, usando método base.")
+        return self._component_wrapped.get_total_row_count()
 
     def select_all(self):
-        if self.select_all_header.is_visible():
-            log.debug("Seleccionando todas las filas de la tabla...")
-            self.select_all_header.click()
+        """Versión mejorada: usa el selector específico de GuiGridView."""
+        if self.select_all_button.is_visible():
+            log.debug("Seleccionando todas las filas (método GuiGridView)...")
+            self.select_all_button.click()
         else:
-            log.warning("El botón para seleccionar todas las filas no está visible.")
+            # Fallback
+            log.warning("Botón 'seleccionar todo' de GuiGridView no encontrado.")
+            self._component_wrapped.select_all()
 
-    def click_toolbar_button(self, button_name: str, exact: bool=True):
-        log.debug(f"Intentando hacer clic en el botón '{button_name}' de la barra de herramientas.")
+    def click_toolbar_button(self, button_name: str, exact: bool = True):
+        """Versión mejorada: usa el selector de botones de GuiGridView."""
         try:
             button_locator = self.table_locator.get_by_role("button", name=button_name, exact=exact)
             button_locator.click()
             log.debug(f"Clic en el botón '{button_name}' realizado con éxito.")
         except Exception as e:
             log.error(f"No se pudo hacer clic en el botón '{button_name}': {e}")
-            raise
-
-    def get_total_row_count(self) -> int:
-        """
-        (RECOMENDADO) Devuelve el número TOTAL de filas buscando los metadatos
-        por su firma semántica ("Type": "GuiGridView").
-        """
-        metadata = self._get_metadata_object()
-        if metadata:
-            total_rows = metadata.get("totalRows", 0)
-            log.debug(f"La tabla reporta un total de {total_rows} filas.")
-            return int(total_rows)
-        log.warning("No se pudo determinar el número total de filas.")
-        return 0
-
-    def get_total_row_count_by_key(self, key: str = "34") -> int:
-        """
-        (FRÁGIL) Devuelve el número TOTAL de filas usando una clave 'mágica'
-        hardcodeada (ej: "34"). Menos robusto, pero útil para comparar.
-        """
-        warnings.warn('Deprecado!, usa get_total_row_count()', UserWarning)
-        log.debug(f"Extrayendo metadatos de la tabla desde la clave '{key}'.")
-        lsdata_str = self.table_locator.get_attribute("lsdata")
-        if not lsdata_str: return 0
-
-        try:
-            data = json.loads(lsdata_str)
-            metadata = data.get(key, {})
-            total_rows = metadata.get("totalRows", 0)
-            log.debug(f"[Por Clave] La tabla reporta un total de {total_rows} filas.")
-            return int(total_rows)
-        except (json.JSONDecodeError, AttributeError):
-            log.warning(f"[Por Clave] No se pudo determinar el número de filas usando la clave '{key}'.")
-            return 0
-
-    def get_visible_row_count(self) -> int:
-        count = self.table_locator.locator("role=row:has(role=gridcell)").count()
-        log.debug(f"Se han encontrado {count} filas de datos visibles en el DOM.")
-        return count
-
-    def click_cell(self, row_index: int, col_index: int):
-        log.debug(f"Intentando hacer clic en la celda de la fila {row_index}, columna {col_index}.")
-        try:
-            row_locator = self.table_locator.locator("role=row:has(role=gridcell)").nth(row_index)
-            cell_locator = row_locator.locator("role=gridcell").nth(col_index)
-            cell_locator.click()
-            log.debug("Clic en la celda realizado con éxito.")
-        except Exception as e:
-            log.error(f"No se pudo hacer clic en la celda ({row_index}, {col_index}): {e}")
-            raise
+            self._component_wrapped.click_toolbar_button(button_name, exact)
