@@ -7,6 +7,7 @@ from .sap_page_base import PlaywrightTimeoutError
 # Componentes y Estrategias
 from core.components.form.sap_form_strategies import RangeFillStrategy, FormFillingStrategy
 from core.components.table.sap_table_component import SAPTableComponent
+from core.components.decorators.grid_view_decorator import GridViewDecorator
 
 log = logging.getLogger(__name__)
 
@@ -20,8 +21,8 @@ class ZsinOrdenesPage(SAPReportPage):
 
         # --- Definición de componentes y locators específicos de ZSIN_ORDENES ---
         table_main_locator = self.playwright_page.locator(self._provider.get('results.tabla'))
-        self.results_table = SAPTableComponent(self, table_main_locator)
-        self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
+        base_table = SAPTableComponent(self, table_main_locator)
+        self.results_table = GridViewDecorator(base_table, table_main_locator)
 
     # --- Implementación de las propiedades abstractas obligatorias ---
 
