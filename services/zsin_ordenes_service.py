@@ -64,8 +64,7 @@ class ZsinOrdenesService:
             self._page.ejecutar_busqueda()
             total = self._page.obtener_resultados()
 
-            # TODO FIXME argumento wait, no cerrar o algo así:
-            # self._page.pause()
+            # TODO FIXME argumento wait, no cerrar o algo así: # FIXME DEBUG self._page.pause()
 
             if total < 1:
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
@@ -74,8 +73,6 @@ class ZsinOrdenesService:
 
             # FIXME esto no es semánticamente correcto porque esto no es form data, pero es que el payload, 
             # el modelo ni siquiera debería ser form data sino simplemente data model
-            self._page.pause()
-
             # 5. Reenviar órdenes si corresponde
             if getattr(form_data, "reenviar", False):
                 log.info("Acción: Reenviar órdenes.")
