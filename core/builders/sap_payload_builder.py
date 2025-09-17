@@ -1,45 +1,48 @@
-# builders/sap_payload_builder.py
+# Fichero: builders/sap_payload_builder.py
 
 from datetime import date
 from pydantic import BaseModel
-from typing import Any, Dict, Callable, Tuple
+from typing import Any
 
-# FIXME a ver si esto se inyecta o qué
-from config import ZsinOrdenesConfig
-config = ZsinOrdenesConfig()
+# 1. Importamos la 'abstracción' de la que dependeremos: nuestra dataclass.
+#    Ya no importamos una configuración específica.
+from config.settings import TransactionConfig
 
+# 2. Importamos los formatters como antes.
 from . import formatters
 
 
 class SapPayloadBuilder:
     """
     Genera payloads específicos para la UI de SAP.
-    Convierte tipos de datos puros del modelo (ej: date, bool, tuple)
-    en los strings que la UI de SAP necesita.
+    Convierte tipos de datos puros del modelo en los strings que la UI necesita.
+    Ahora es una clase que se instancia.
     """
-    # Formato de fecha configurable desde el builder
-    DATE_FORMAT = config.DATE_FORMAT
+    # 3. El constructor recibe la configuración (Inyección de Dependencias).
+    def __init__(self, config: TransactionConfig):
+        """
+        Inicializa el builder con una configuración de transacción específica.
+        """
+        self.config = config
 
-    @classmethod
-    def build_payload(cls, form_data: BaseModel) -> dict:
+    # 4. El método ahora es de instancia (usa 'self' en lugar de 'cls').
+    def build_payload(self, form_data: BaseModel) -> dict:
         """
         Toma un modelo Pydantic y lo convierte en un diccionario listo
-        para la UI, aplicando la lógica de formato correcta para cada tipo de dato.
+        para la UI, usando la configuración inyectada.
         """
-        payload = form_data.model_dump()
+        payload = form_data.model_dump(exclude_none=True)
 
         for key, value in payload.items():
-            if value is None:
-                continue
+            # 5. Se usa la configuración de la instancia: self.config
+            date_format = self.config.date_format
 
-            # Caso 1: El valor es una tupla (rango)
             if isinstance(value, tuple):
                 payload[key] = formatters.format_tuple(
-                    value, date_formatter=lambda d: formatters.format_date(d, cls.DATE_FORMAT)
+                    value, date_formatter=lambda d: formatters.format_date(d, date_format)
                 )
-            # Caso 2: El valor es un tipo simple
             elif isinstance(value, date):
-                payload[key] = formatters.format_date(value, cls.DATE_FORMAT)
+                payload[key] = formatters.format_date(value, date_format)
             elif isinstance(value, bool):
                 payload[key] = formatters.format_bool(value)
             else:

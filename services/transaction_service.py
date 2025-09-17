@@ -1,7 +1,7 @@
-# services/transaction_service.py
-# Servicio para ejecutar transacciones en SAP
+# Fichero: services/transaction_service.py
 
 from pages.sap_easy_access_page import SAPEasyAccessPage
+from pages.transaction_page import TransactionPage # <-- Importamos el tipo que se devuelve
 
 class TransactionService:
     """
@@ -10,11 +10,13 @@ class TransactionService:
     def __init__(self, easy_access_page: SAPEasyAccessPage):
         self._easy_access_page = easy_access_page
 
-    def run_transaction(self, transaction_code: str):
+    def run_transaction(self, transaction_code: str) -> TransactionPage:
         """
-        Introduce un código de transacción y lo ejecuta.
+        Introduce un código de transacción, lo ejecuta y devuelve la página resultante.
         """
         self._easy_access_page.enter_transaction(transaction_code)
-        self._easy_access_page.execute_transaction()
-
-        self._easy_access_page.page.locator('form[ct="FOR"]')
+        
+        # Ahora el servicio solo orquesta, no conoce los detalles de la UI
+        transaction_page = self._easy_access_page.execute_transaction()
+        
+        return transaction_page

@@ -3,7 +3,7 @@
 # FIXME Debemos abstraernos de Playwright?
 # por type hiting los no usados
 from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeoutError
-from config import BASE_URL
+from config.settings import general_config
 
 class PageBase:
     """
@@ -14,7 +14,7 @@ class PageBase:
         if not isinstance(page, Page):
             raise TypeError("Se esperaba un objeto Page de Playwright.")
         self.page = page
-        self.base_url = BASE_URL
+        self.base_url = general_config.base_url
 
     # FIXME Debemos abstraernos de Playwright?
     @property

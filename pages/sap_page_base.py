@@ -1,7 +1,7 @@
 # pages/sap_page_base.py
 
 import logging
-from .page_base import PageBase, Locator, PlaywrightTimeoutError
+from .page_base import PageBase, Locator, PlaywrightTimeoutError # Deja Locator para que propague la importación a las que lo necesiten
 from core.providers.locators.base_locator_provider import BaseLocatorProvider
 
 log = logging.getLogger(__name__)

@@ -3,7 +3,7 @@
 import toml
 from pathlib import Path
 from pydantic import BaseModel, Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ===================================================================
 # 1. MODELO PARA SECRETOS Y VARIABLES DE ENTORNO
@@ -17,10 +17,16 @@ class EnvironmentSettings(BaseSettings):
     sap_username: str = Field(alias="SAP_USER")
     sap_password: str = Field(alias="SAP_PASSWORD", repr=False)
 
-    class Config:
-        # Fichero del que se leerán las variables de entorno
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    # --- CORRECCIÓN ---
+    # Esta es la nueva sintaxis de Pydantic v2 para la configuración.
+    # 'extra = "ignore"' le dice a Pydantic que no se queje si el .env
+    # tiene más variables de las que hemos definido aquí.
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
 
 # ===================================================================
 # 2. MODELOS PARA LA CONFIGURACIÓN DEL FICHERO .TOML
