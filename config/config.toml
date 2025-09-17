@@ -1,0 +1,37 @@
+# Fichero: config/config.toml
+
+# --- Configuración General de la Aplicación ---
+[general]
+base_url = "https://s4pf.refrival.com/sap/bc/gui/sap/its/webgui?sap-language=ES"
+default_timeout = 30000
+default_browser = "firefox"
+download_dir = "/home/covi/Descargas"
+default_centro = "E086"
+date_format = "%d.%m.%Y"
+
+# --- Configuración del Logger ---
+[logging]
+logger_name = "sap_automation"
+log_level = "INFO"
+log_file = "automation.log"
+log_format = "%(asctime)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+
+# --- Configuración Específica por Transacción ---
+[transactions]
+
+    [transactions.mb52]
+    transaction_code = "MB52"
+    export_filename = "STOCK.xlsx"
+    locator_file = "mb52.toml"
+
+    [transactions.iq09]
+    transaction_code = "IQ09"
+    export_filename = "STOCK_SERIADO.xlsx"
+    locator_file = "iq09.toml"
+
+    [transactions.zsin_ordenes]
+    transaction_code = "ZSIN_ORDENES"
+    export_filename = "smart"
+    locator_file = "zsin_ordenes.toml"
+    # Se puede sobreescribir un valor general para una transacción específica
+    download_dir = "/home/covi/Descargas/ordenes_sap"
