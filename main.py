@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 
-# ## XXX CAMBIO 1: Importamos los componentes y las "fuentes de verdad"
+# Importamos los componentes y las "fuentes de verdad"
 from config.settings import (
     general_config,
     env_settings,
@@ -15,6 +15,7 @@ from core.browser_manager import BrowserManager
 from core.cli_handler import CliHandler
 from core.logging.logger_config import setup_logging
 from core.providers.locator_provider_factory import LocatorProviderFactory
+from core.providers.locators.toml_locator_provider import TomlLocatorProvider
 
 # --- Importaciones de la librería de autenticación ---
 from covi_auth_lib import LoginService, PlaywrightAdapter, UsernamePasswordProvider
@@ -34,13 +35,17 @@ def main() -> None:
     setup_logging(log_level=run_config.log_level)
     log.info(f"Iniciando transacción '{run_config.transaction_name}'...")
 
-    # ## XXX CAMBIO 2: Se cargan las dependencias principales una sola vez al inicio.
+    # XXX Se cargan las dependencias principales una sola vez al inicio.
     # Estas son las únicas implementaciones concretas que 'main' conocerá.
     registry = TRANSACTION_REGISTRY
     configs = TRANSACTION_CONFIGS
-    locator_factory = LocatorProviderFactory()
 
-    # ## XXX CAMBIO 3: Se inyectan las dependencias en el builder.
+    # --- Fábrica agnóstica de locators ---
+    # XXX Creamos los providers inyectando los ficheros concretos y comunes
+    common_provider = TomlLocatorProvider(Path("config/locators/common.toml"))
+    locator_factory = LocatorProviderFactory(common_providers=[common_provider])
+
+    # XXX Se inyectan las dependencias en el builder.
     # El builder ya no importa sus dependencias; las recibe.
     builder = GenericTransactionBuilder(
         registry=registry,
@@ -56,12 +61,14 @@ def main() -> None:
 
     try:
         # --- NAVEGACIÓN INICIAL ---
-        # ## XXX CAMBIO 4: Usamos el objeto de configuración importado.
+        # XXX Usamos el objeto de configuración importado.
         log.info(f"Navegando a la URL de SAP: {general_config.base_url}")
         page.goto(general_config.base_url)
 
         # --- FLUJO DE LOGIN ---
-        login_provider = locator_factory.create("login.toml")
+        # XXX Provider específico de login
+        login_specific = TomlLocatorProvider(Path("config/locators/login.toml"))
+        login_provider = locator_factory.create(login_specific)
 
         user_selector = login_provider.get("form.input_user")
         password_selector = login_provider.get("form.input_password")
@@ -76,14 +83,15 @@ def main() -> None:
         )
         login_service = LoginService(provider=auth_provider)
 
-        # ## XXX CAMBIO 5: Las credenciales se obtienen del objeto 'env_settings'.
+        # XXX Las credenciales se obtienen del objeto 'env_settings'.
         # Ya no se instancia 'BaseConfig'.
         if not login_service.login(user=env_settings.sap_username, password=env_settings.sap_password):
             raise RuntimeError("El proceso de login ha fallado. Abortando transacción.")
 
         log.info("Login realizado con éxito.")
 
-        # ## XXX CAMBIO 6: Se usan los nuevos métodos del builder "puro".
+        # --- EJECUCIÓN DE LA TRANSACCIÓN ---
+        # XXX Se usan los nuevos métodos del builder "puro".
         # El código de la transacción se pasa como parámetro, ya no es estado interno.
         service = builder.build_service(run_config.transaction_name, page)
         builder.run_service(service, run_config.transaction_name, run_config.params)

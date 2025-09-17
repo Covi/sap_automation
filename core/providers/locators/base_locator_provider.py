@@ -2,15 +2,18 @@
 # Proveedor base para locators
 
 from abc import ABC, abstractmethod
+from typing import Any
+
 
 class BaseLocatorProvider(ABC):
     """
-    Define la interfaz para cualquier proveedor de locators.
-    Establece el contrato que todas las implementaciones deben seguir.
+    Contrato base para cualquier proveedor de localizadores.
     """
+
     @abstractmethod
-    def get(self, locator_key: str) -> str:
+    def get(self, locator_key: str) -> Any:
         """
-        Obtiene un locator específico a través de su clave.
+        Devuelve el localizador asociado a la clave.
+        Lanza KeyError si no existe.
         """
         pass

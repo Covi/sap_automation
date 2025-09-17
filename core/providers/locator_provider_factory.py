@@ -1,31 +1,28 @@
-# core/providers/locator_provider_factory.py
+# Fichero: core/providers/locator_provider_factory.py
 
-import config
+from pathlib import Path
+from typing import Sequence
+from core.providers.locators.base_locator_provider import BaseLocatorProvider
+from core.providers.locators.composite_locator_provider import CompositeLocatorProvider
+from core.providers.locators.toml_locator_provider import TomlLocatorProvider
 
-from .locators.base_locator_provider import BaseLocatorProvider
-from .locators.toml_locator_provider import TomlLocatorProvider
-from .locators.composite_locator_provider import CompositeLocatorProvider
-
+# ## XXX CABECERA: Factory AGNÓSTICA para locators.
 class LocatorProviderFactory:
     """
-    Construye un provider compuesto bajo demanda para un fichero de localizadores específico.
+    Crea CompositeLocatorProviders a partir de proveedores inyectados.
+    Esta versión es completamente agnóstica y no conoce ficheros por sí misma.
     """
-    def __init__(self):
-        # La factory pre-carga el provider común
-        self.common_provider = TomlLocatorProvider(config.COMMON_LOCATORS_PATH)
 
-    def create(self, locator_filename: str) -> BaseLocatorProvider:
+    def __init__(self, common_providers: Sequence[BaseLocatorProvider] | None = None):
+        # Lista de providers "comunes" que se incluirán siempre
+        self._common_providers = list(common_providers) if common_providers else []
+
+    def create(self, specific_provider: BaseLocatorProvider) -> BaseLocatorProvider:
         """
-        Crea un provider compuesto para un fichero de localizadores específico.
-
-        Args:
-            locator_filename: El nombre del fichero (ej: "login.toml", "mb52.toml").
-
-        Returns:
-            Un CompositeLocatorProvider que incluye los localizadores específicos y los comunes.
+        Construye un CompositeLocatorProvider que combina:
+          - Un provider específico (inyección)
+          - Los providers comunes (inyección)
         """
-        specific_path = config.LOCATORS_DIR / locator_filename
-        specific_provider = TomlLocatorProvider(specific_path)
-        
-        # El proveedor compuesto ahora incluye el específico, el de los componentes y el común.
-        return CompositeLocatorProvider([specific_provider, self.common_provider])
+        all_providers = [specific_provider] + self._common_providers
+        return CompositeLocatorProvider(all_providers)
+

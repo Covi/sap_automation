@@ -12,7 +12,7 @@ from core.builders.sap_payload_builder import SapPayloadBuilder
 
 log = logging.getLogger(__name__)
 
-class IQ09Service:
+class Iq09Service:
     """
     Servicio específico para la lógica de la transacción IQ09.
     """

@@ -1,11 +1,13 @@
+# Fichero: services/zsin_ordenes_service.py
+
 import logging
 from pathlib import Path
 from typing import Optional, Protocol
 
-from config import ZsinOrdenesConfig
+# ## XXX CAMBIO 1: Se eliminan las importaciones de la configuración antigua.
+# Se añaden los tipos necesarios para la Inyección de Dependencias.
+from config.settings import TransactionConfig
 from core.builders.sap_payload_builder import SapPayloadBuilder
-
-# --- CAMBIO CLAVE: Importación actualizada a la nueva ruta y nombres ---
 from schemas.zsin_ordenes import ZsinOrdenesCriteria, ZsinOrdenesExecutionOptions
 from services.transaction_service import TransactionService
 from pages.zsin_ordenes_page import ZsinOrdenesPage
@@ -22,42 +24,39 @@ class PrintServiceProtocol(Protocol):
 class ZsinOrdenesService:
     """
     Servicio para la transacción ZSIN_ORDENES.
-
-    :param transaction_service: Servicio genérico de transacciones SAP.
-    :param page: Página de la transacción ZSIN_ORDENES.
-    :param file_handler: Servicio opcional para manejo de ficheros.
-    :param print_service: Servicio opcional para impresión.
+    Ahora recibe todas sus dependencias en el constructor.
     """
+    # ## XXX CAMBIO 2: El constructor se actualiza para recibir 'config' y 'payload_builder'.
     def __init__(
         self,
         transaction_service: TransactionService,
         page: ZsinOrdenesPage,
+        config: TransactionConfig,
+        payload_builder: SapPayloadBuilder,
         file_handler: Optional[FileHandlerProtocol] = None,
         print_service: Optional[PrintServiceProtocol] = None,
     ):
         self._transaction_service = transaction_service
         self._page = page
-        self._config = ZsinOrdenesConfig()
+        self.config = config  # Inyectado
+        self._payload_builder = payload_builder  # Inyectado
         self._file_handler = file_handler
         self._print_service = print_service
+        # La línea 'self._config = ZsinOrdenesConfig()' se ha eliminado.
 
-    # --- La firma y la lógica del método 'run' se actualizan ---
     def run(self, criteria: ZsinOrdenesCriteria, options: ZsinOrdenesExecutionOptions):
         """
         Orquesta el flujo completo de la transacción ZSIN_ORDENES.
-
-        :param criteria: Criterios de búsqueda para el formulario.
-        :param options: Opciones de ejecución (acciones, configuración de salida).
         """
         try:
-            self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
+            # ## XXX CAMBIO 3: Se usa la configuración inyectada.
+            self._transaction_service.run_transaction(self.config.transaction_code)
 
             # TODO FIXME DEBUG self._page.pause()
 
-            # Modelo
-            payload = SapPayloadBuilder.build_payload(criteria)
+            # ## XXX CAMBIO 4: Se usa la INSTANCIA del payload_builder inyectado.
+            payload = self._payload_builder.build_payload(criteria)
 
-            #self._page.esperar_formulario()
             self._page.rellenar_formulario(payload)
             self._page.ejecutar()
             total = self._page.obtener_resultados()

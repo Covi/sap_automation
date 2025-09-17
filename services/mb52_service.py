@@ -3,9 +3,7 @@
 import logging
 from pathlib import Path
 
-# ## XXX CAMBIO 1: Se eliminan las importaciones de configuración concretas.
-
-# ## XXX CAMBIO 2: Importamos los 'tipos' para el type hinting, no las implementaciones.
+# Importamos los 'tipos' para el type hinting, no las implementaciones.
 from pydantic import BaseModel
 from config.settings import TransactionConfig
 from services.transaction_service import TransactionService
@@ -24,7 +22,7 @@ class MB52Service:
     Servicio específico para la lógica de la transacción MB52.
     Recibe todas sus dependencias en el constructor.
     """
-    # ## XXX CAMBIO 3: El constructor ahora recibe TODAS sus dependencias.
+    # El constructor ahora recibe TODAS sus dependencias.
     def __init__(
         self,
         transaction_service: TransactionService,
@@ -43,7 +41,7 @@ class MB52Service:
         Ahora no necesita los parámetros 'path' y 'filename', los obtiene de su config.
         """
         try:
-            # ## XXX CAMBIO 4: Usa la configuración y el builder inyectados.
+            # Usa la configuración y el builder inyectados.
             self._transaction_service.run_transaction(self.config.transaction_code)
             self.generar_informe(form_data)
 
@@ -60,7 +58,7 @@ class MB52Service:
 
     def generar_informe(self, form_data: BaseModel):
         """Genera el informe utilizando el payload builder inyectado."""
-        # ## XXX CAMBIO 5: Usa la INSTANCIA del payload builder.
+        # Usa la INSTANCIA del payload builder.
         payload = self._payload_builder.build_payload(form_data)
         self._page.rellenar_formulario(payload)
         self._page.ejecutar()
@@ -72,7 +70,7 @@ class MB52Service:
         log.info(f"Descargando informe en: {fichero_de_salida_path}")
 
         try:
-            # ## XXX CAMBIO 6: El nombre del fichero ya no es un parámetro, viene de la ruta.
+            # El nombre del fichero ya no es un parámetro, viene de la ruta.
             download = self._page.descargar_hoja_calculo(fichero_de_salida_path.name)
             download.save_as(fichero_de_salida_path)
             log.info(f"Fichero guardado en: {fichero_de_salida_path}")
