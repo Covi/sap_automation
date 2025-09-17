@@ -1,22 +1,29 @@
 # Fichero: config/settings.py
 
-import os
 import toml
 from pathlib import Path
-from dotenv import load_dotenv
-
 from pydantic import BaseModel, Field
-
-# --- Carga de entorno para secretos (.env) ---
-load_dotenv()
-
-# --- Definición de Rutas del Proyecto ---
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-LOCATORS_DIR = PROJECT_ROOT / "locators"
+from pydantic_settings import BaseSettings
 
 # ===================================================================
-# 1. DEFINICIÓN DE LOS MODELOS DE CONFIGURACIÓN CON PYDANTIC
-#    Estas clases actúan como el "esquema" de tu fichero config.toml
+# 1. MODELO PARA SECRETOS Y VARIABLES DE ENTORNO
+# ===================================================================
+
+class EnvironmentSettings(BaseSettings):
+    """
+    Este modelo lee automáticamente las variables del fichero .env.
+    Pydantic se encarga de validar que existan. ¡Esto reemplaza a get_required_env!
+    """
+    sap_username: str = Field(alias="SAP_USER")
+    sap_password: str = Field(alias="SAP_PASSWORD", repr=False)
+
+    class Config:
+        # Fichero del que se leerán las variables de entorno
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+# ===================================================================
+# 2. MODELOS PARA LA CONFIGURACIÓN DEL FICHERO .TOML
 # ===================================================================
 
 class GeneralSettings(BaseModel):
@@ -37,43 +44,45 @@ class TransactionSettings(BaseModel):
     transaction_code: str
     export_filename: str
     locator_file: str
-    # Este campo es opcional. Si no está en el .toml, será None.
     download_dir: Path | None = None
 
 class AllTransactions(BaseModel):
-    """Define explícitamente cada transacción que esperas encontrar."""
     mb52: TransactionSettings
     iq09: TransactionSettings
-    zsin_ordenes: TransactionSettings = Field(alias="zsin-ordenes") # Si usas guiones en el toml
+    zsin_ordenes: TransactionSettings
 
-class AppSettings(BaseModel):
-    """El modelo raíz que contiene toda la configuración."""
+
+class TomlSettings(BaseModel):
+    """El modelo raíz que mapea la estructura del fichero config.toml."""
     general: GeneralSettings
     logging: LoggingSettings
     transactions: AllTransactions
 
 # ===================================================================
-# 2. CARGA Y VALIDACIÓN DE LA CONFIGURACIÓN
+# 3. CARGA Y COMBINACIÓN DE TODA LA CONFIGURACIÓN
 # ===================================================================
 
+# --- Rutas del Proyecto ---
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+LOCATORS_DIR = PROJECT_ROOT / "locators"
+
+# --- Carga de las diferentes fuentes ---
 _config_path = Path(__file__).parent / "config.toml"
-_raw_config_data = toml.load(_config_path)
+_raw_toml_data = toml.load(_config_path)
 
-# ¡Magia de Pydantic! Se parsea y valida todo el diccionario con una sola línea.
-# Si algo en el .toml no coincide con los modelos, Pydantic lanzará un error.
-settings = AppSettings(**_raw_config_data)
+# --- Instanciación y Validación ---
+env_settings = EnvironmentSettings()   # Pydantic lee y valida .env aquí # type: ignore
+toml_settings = TomlSettings(**_raw_toml_data) # Pydantic lee y valida el diccionario de toml aquí
 
 # ===================================================================
-# 3. (Opcional) AÑADIR CREDENCIALES Y EXPORTAR OBJETOS FINALES
-#    Para mantener la configuración de transacciones limpia, podemos
-#    crear las instancias finales como lo hacíamos antes.
+# 4. EXPORTACIÓN DE LAS CONFIGURACIONES FINALES
+#    (Usando dataclasses para desacoplar del resto de la app, como antes)
 # ===================================================================
-
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class TransactionConfig:
-    """Dataclass final para usar en la aplicación (igual que la que tenías)."""
+    # ... (La definición de la dataclass es la misma que la versión corregida)
     download_dir: Path
     default_centro: str
     date_format: str
@@ -83,27 +92,24 @@ class TransactionConfig:
     sap_username: str = Field(repr=False)
     sap_password: str = Field(repr=False)
 
-# --- Creación de las instancias finales ---
 
 TRANSACTION_CONFIGS = {}
-for tx_name, tx_data in settings.transactions:
-    # Ahora tx_data es un objeto TransactionSettings con tipos conocidos
-    
-    # Lógica para determinar el directorio de descarga
-    final_download_dir = tx_data.download_dir or settings.general.download_dir
+for tx_name, tx_data in toml_settings.transactions:
+    final_download_dir = tx_data.download_dir or toml_settings.general.download_dir
     
     tx_config = TransactionConfig(
-        sap_username=os.getenv("SAP_USER", ""), # Añadimos un default para que Pylance no se queje
-        sap_password=os.getenv("SAP_PASSWORD", ""),
+        # Los datos vienen de los modelos de pydantic ya validados
         download_dir=final_download_dir,
-        default_centro=settings.general.default_centro,
-        date_format=settings.general.date_format,
+        default_centro=toml_settings.general.default_centro,
+        date_format=toml_settings.general.date_format,
         transaction_code=tx_data.transaction_code,
         export_filename=tx_data.export_filename,
-        locator_file=LOCATORS_DIR / tx_data.locator_file
+        locator_file=LOCATORS_DIR / tx_data.locator_file,
+        sap_username=env_settings.sap_username,
+        sap_password=env_settings.sap_password
     )
     TRANSACTION_CONFIGS[tx_data.transaction_code] = tx_config
 
-# También puedes exportar configuraciones específicas si quieres
-log_config = settings.logging
-general_config = settings.general
+# Exportamos el resto de configs
+log_config = toml_settings.logging
+general_config = toml_settings.general
