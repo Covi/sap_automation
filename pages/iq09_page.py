@@ -55,7 +55,7 @@ class Iq09Page(SAPReportPage):
 
     def descargar_informe(self) -> Download:
         """Inicia la descarga a través de la navegación por el menú de SAP."""
-        log.info("Iniciando descarga para IQ09 a través del menú SAP...")
+        log.debug("Iniciando descarga para IQ09 a través del menú SAP...")
         try:
             self.menu.navigate_to("Menú", "Lista", "Grabar", "Fichero...")
             return self.export_dialog.exportar_como_spreadsheet()

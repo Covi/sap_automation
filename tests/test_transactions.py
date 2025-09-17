@@ -5,30 +5,23 @@ from pathlib import Path
 import logging
 from dataclasses import replace
 
-# --- Imports del nuevo sistema de configuración ---
+# ## XXX CAMBIO 1: Importamos todas las dependencias necesarias para el builder.
 from config.settings import TRANSACTION_CONFIGS
+from core.registry import TRANSACTION_REGISTRY
+from core.providers.locator_provider_factory import LocatorProviderFactory
 from core.browser_manager import BrowserManager
 from core.builders.generic_transaction_builder import GenericTransactionBuilder
 
 log = logging.getLogger(__name__)
 
-# ===================================================================
-# 1. FIXTURE PARAMETRIZADA
-#    Esta única fixture reemplaza a mb52_builder_and_page y iq09_builder_and_page.
-#    pytest la ejecutará una vez por cada valor en "params".
-# ===================================================================
-
 @pytest.fixture(
     scope="function",
-    params=["MB52", "IQ09", "ZSIN_ORDENES"] # Aquí defines para qué transacciones correrán los tests
+    params=["MB52", "IQ09", "ZSIN_ORDENES"]
 )
 def transaction_context(request):
     """
-    Prepara un contexto completo para un test de transacción:
-    - Inicia el navegador.
-    - Obtiene el código de la transacción del parámetro del test (request.param).
-    - Crea el builder para esa transacción.
-    - Proporciona el objeto de configuración correspondiente.
+    Prepara un contexto completo para un test de transacción.
+    Ahora crea el builder "puro" inyectando sus dependencias.
     """
     transaction_code = request.param
     log.info(f"--- Preparando Fixture para la transacción: {transaction_code} ---")
@@ -36,32 +29,33 @@ def transaction_context(request):
     manager = BrowserManager(headless=True)
     page = manager.start_browser()
     
-    builder = GenericTransactionBuilder(transaction_code)
-    # Obtenemos la instancia de configuración correcta del diccionario que importamos
+    # ## XXX CAMBIO 2: Se crea el builder con la nueva firma, inyectando dependencias.
+    builder = GenericTransactionBuilder(
+        registry=TRANSACTION_REGISTRY,
+        configs=TRANSACTION_CONFIGS,
+        provider_factory=LocatorProviderFactory()
+    )
+    
     config = TRANSACTION_CONFIGS[transaction_code]
 
-    # 'yield' pasa estos tres objetos al test que use la fixture
-    yield page, builder, config
+    # ## XXX CAMBIO 3: 'yield' ahora también pasa el transaction_code.
+    # Los tests lo necesitarán para llamar a los métodos del builder.
+    yield page, builder, config, transaction_code
 
     log.info(f"--- Cerrando Fixture para la transacción: {transaction_code} ---")
     manager.close_browser()
 
-# ===================================================================
-# 2. TESTS PARAMETRIZADOS
-#    Cada test ahora recibe el contexto de la fixture y se ejecuta
-#    para cada una de las transacciones definidas en `params`.
-# ===================================================================
 
 def test_run_service_with_defaults(transaction_context):
     """
     Prueba el flujo completo con valores por defecto para TODAS las transacciones.
     """
-    page, builder, config = transaction_context
-    log.info(f"Iniciando test con valores por defecto para [{config.transaction_code}]...")
+    # ## XXX CAMBIO 4: Desempaquetamos también el transaction_code.
+    page, builder, config, transaction_code = transaction_context
+    log.info(f"Iniciando test con valores por defecto para [{transaction_code}]...")
 
     params = {}
     
-    # Usamos el objeto 'config' que nos da la fixture para obtener las rutas
     downloads_dir = Path(config.download_dir)
     downloads_dir.mkdir(parents=True, exist_ok=True)
     expected_file = downloads_dir / config.export_filename
@@ -70,10 +64,11 @@ def test_run_service_with_defaults(transaction_context):
         expected_file.unlink()
 
     try:
-        service = builder.build_service(page)
-        builder.run_service(service, params)
+        # ## XXX CAMBIO 5: Se pasa el transaction_code a los métodos del builder.
+        service = builder.build_service(transaction_code, page)
+        builder.run_service(service, transaction_code, params)
         assert expected_file.exists(), f"El fichero esperado {expected_file} no fue creado."
-        log.info(f"Test [{config.transaction_code}] completado. Fichero creado: {expected_file}")
+        log.info(f"Test [{transaction_code}] completado. Fichero creado: {expected_file}")
     finally:
         if expected_file.exists():
             expected_file.unlink()
@@ -82,10 +77,10 @@ def test_run_service_with_overrides(transaction_context):
     """
     Prueba el flujo con parámetros personalizados para TODAS las transacciones.
     """
-    page, builder, config = transaction_context
-    log.info(f"Iniciando test con overrides para [{config.transaction_code}]...")
+    page, builder, config, transaction_code = transaction_context
+    log.info(f"Iniciando test con overrides para [{transaction_code}]...")
 
-    custom_filename = f"informe_{config.transaction_code.lower()}_personalizado.xlsx"
+    custom_filename = f"informe_{transaction_code.lower()}_personalizado.xlsx"
     params = {
         "centro": config.default_centro,
         "output": custom_filename
@@ -99,10 +94,10 @@ def test_run_service_with_overrides(transaction_context):
         expected_file.unlink()
 
     try:
-        service = builder.build_service(page)
-        builder.run_service(service, params)
+        service = builder.build_service(transaction_code, page)
+        builder.run_service(service, transaction_code, params)
         assert expected_file.exists(), f"El fichero personalizado {expected_file} no fue creado."
-        log.info(f"Test [{config.transaction_code}] completado. Fichero creado: {expected_file}")
+        log.info(f"Test [{transaction_code}] completado. Fichero creado: {expected_file}")
     finally:
         if expected_file.exists():
             expected_file.unlink()
@@ -111,25 +106,18 @@ def test_run_service_with_temp_directory(transaction_context, monkeypatch, tmp_p
     """
     Prueba con un directorio de descarga temporal para TODAS las transacciones.
     """
-    page, builder, config = transaction_context
-    log.info(f"Iniciando test con directorio temporal para [{config.transaction_code}]...")
+    page, builder, config, transaction_code = transaction_context
+    log.info(f"Iniciando test con directorio temporal para [{transaction_code}]...")
     
-    # La fixture tmp_path de pytest crea un directorio temporal único
     temp_dir = tmp_path
     expected_file = temp_dir / config.export_filename
 
-    # --- NUEVA FORMA DE HACER MONKEYPATCH ---
-    # Como la config es una dataclass inmutable (frozen=True), no podemos usar setattr.
-    # En su lugar, creamos una COPIA de la config modificando solo el campo que queremos.
     modified_config = replace(config, download_dir=str(temp_dir))
-
-    # Ahora, le decimos a monkeypatch que cuando el builder pida la configuración de,
-    # por ejemplo, 'MB52', en lugar de devolver la original, devuelva nuestra copia modificada.
-    monkeypatch.setitem(TRANSACTION_CONFIGS, config.transaction_code, modified_config)
+    monkeypatch.setitem(TRANSACTION_CONFIGS, transaction_code, modified_config)
     
-    # El builder, al ejecutarse, usará la configuración que hemos "inyectado" temporalmente.
-    service = builder.build_service(page)
-    builder.run_service(service, {}) # params vacíos
+    # El builder usará la config parcheada porque se le inyectó el diccionario TRANSACTION_CONFIGS
+    service = builder.build_service(transaction_code, page)
+    builder.run_service(service, transaction_code, {}) # params vacíos
 
     assert expected_file.exists(), f"El fichero {expected_file} no fue creado en el dir temporal."
-    log.info(f"Test [{config.transaction_code}] completado. Fichero creado en: {expected_file}")
+    log.info(f"Test [{transaction_code}] completado. Fichero creado en: {expected_file}")
