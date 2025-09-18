@@ -51,9 +51,9 @@ class AllTransactions(BaseModel):
     iq09: TransactionSettings
     zsin_ordenes: TransactionSettings
 
-
-class TomlSettings(BaseModel):
-    """El modelo raíz que mapea la estructura del fichero config.toml."""
+# XXX Config final
+class AppSettings(BaseModel):
+    """El modelo raíz que mapea la estructura de configuración de la aplicación."""
     general: GeneralSettings
     logging: LoggingSettings
     transactions: AllTransactions
@@ -72,17 +72,15 @@ _raw_toml_data = toml.load(_config_path)
 
 # --- Instanciación y Validación ---
 env_settings = EnvironmentSettings()   # Pydantic lee y valida .env aquí # type: ignore
-toml_settings = TomlSettings(**_raw_toml_data) # Pydantic lee y valida el diccionario de toml aquí
+app_settings = AppSettings(**_raw_toml_data)  # Pydantic valida el diccionario del toml
 
 # ===================================================================
 # 4. EXPORTACIÓN DE LAS CONFIGURACIONES FINALES
-#    (Usando dataclasses para desacoplar del resto de la app, como antes)
 # ===================================================================
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class TransactionConfig:
-    # ... (La definición de la dataclass es la misma que la versión corregida)
     download_dir: Path
     default_centro: str
     date_format: str
@@ -94,14 +92,13 @@ class TransactionConfig:
 
 
 TRANSACTION_CONFIGS = {}
-for tx_name, tx_data in toml_settings.transactions:
-    final_download_dir = tx_data.download_dir or toml_settings.general.download_dir
+for tx_name, tx_data in app_settings.transactions:
+    final_download_dir = tx_data.download_dir or app_settings.general.download_dir
     
     tx_config = TransactionConfig(
-        # Los datos vienen de los modelos de pydantic ya validados
         download_dir=final_download_dir,
-        default_centro=toml_settings.general.default_centro,
-        date_format=toml_settings.general.date_format,
+        default_centro=app_settings.general.default_centro,
+        date_format=app_settings.general.date_format,
         transaction_code=tx_data.transaction_code,
         export_filename=tx_data.export_filename,
         locator_file=LOCATORS_DIR / tx_data.locator_file,
@@ -111,5 +108,5 @@ for tx_name, tx_data in toml_settings.transactions:
     TRANSACTION_CONFIGS[tx_data.transaction_code] = tx_config
 
 # Exportamos el resto de configs
-log_config = toml_settings.logging
-general_config = toml_settings.general
+general_config = app_settings.general
+log_config = app_settings.logging
