@@ -3,13 +3,16 @@
 import logging
 from pathlib import Path
 
-# Importamos los componentes y las "fuentes de verdad"
+# Importamos la config y las "fuentes de verdad"
 from config.settings import (
     general_config,
+    log_config, 
     env_settings,
     TRANSACTION_CONFIGS
 )
 from core.registry import TRANSACTION_REGISTRY
+DEFAULT_BROWSER = general_config.default_browser
+
 from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from core.browser_manager import BrowserManager
 from core.cli_handler import CliHandler
@@ -22,17 +25,16 @@ from covi_auth_lib import LoginService, PlaywrightAdapter, UsernamePasswordProvi
 
 log = logging.getLogger(__name__)
 
-
 def main() -> None:
     """Orquesta la ejecución de la aplicación, actuando como la Raíz de Composición."""
-    handler = CliHandler()
+    handler = CliHandler(DEFAULT_BROWSER, TRANSACTION_REGISTRY)
     run_config = handler.handle_request()
 
     if not run_config:
         log.info("Operación finalizada sin ejecutar transacción.")
         return
 
-    setup_logging(log_level=run_config.log_level)
+    setup_logging(log_config)
     log.info(f"Iniciando transacción '{run_config.transaction_name}'...")
 
     # XXX Se cargan las dependencias principales una sola vez al inicio.

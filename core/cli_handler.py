@@ -6,9 +6,6 @@ import sys
 from dataclasses import dataclass, fields
 from typing import Dict, Any, Optional
 
-from core.registry import TRANSACTION_REGISTRY
-from config import DEFAULT_BROWSER
-
 log = logging.getLogger(__name__)
 
 @dataclass
@@ -23,8 +20,9 @@ class RunConfig:
 
 
 class CliHandler:
-    def __init__(self):
-        self.available_trxs = list(TRANSACTION_REGISTRY.keys())
+    def __init__(self, browser, transactions_registry):
+        self.browser = browser
+        self.available_trxs = list(transactions_registry.keys())
         self.parser = self._create_parser()
 
     def _create_parser(self) -> argparse.ArgumentParser:
@@ -41,7 +39,7 @@ class CliHandler:
             help="Muestra los parámetros disponibles para una transacción y sale."
         )
         parser.add_argument("-l", "--list", action='store_true', help="Lista las transacciones disponibles y sale.")
-        parser.add_argument('-b', '--browser', type=str, choices=['firefox', 'chromium', 'webkit'], default=DEFAULT_BROWSER, help=f"Navegador a usar (defecto: {DEFAULT_BROWSER}).")
+        parser.add_argument('-b', '--browser', type=str, choices=['firefox', 'chromium', 'webkit'], default=self.browser, help=f"Navegador a usar (defecto: {self.browser}).")
         parser.add_argument('-hd', '--headless', action='store_true', help="Ejecuta el navegador en modo headless (sin UI).")
         parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="Establece el nivel de log.")
         parser.add_argument('-y', '--yes', action='store_true', help="Asume 'sí' en todas las preguntas de confirmación.")
@@ -68,7 +66,7 @@ class CliHandler:
             log.error(f"Transacción '{trx_name}' no encontrada.")
             return
 
-        recipe = TRANSACTION_REGISTRY[trx_name]
+        recipe = self.available_trxs[trx_name]
         
         # --- 1. Parámetros del Formulario (Pydantic model_fields) ---
         form_model = recipe.data_model_class
