@@ -1,22 +1,31 @@
-# Descripción: Registro central de transacciones para evitar importaciones circulares.
+# Fichero: registry.py
+# Descripción: Registro central de transacciones para evitar importaciones circulares y facilitar la construcción de servicios.
 
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Type
 
-# --- Importa las clases de configuración desde config.py ---
-from config import Mb52Config, Iq09Config, ZsinOrdenesConfig
+# ===================================================================
+# 1. IMPORTACIÓN DE CONFIGURACIÓN
+# ===================================================================
+# CAMBIO 1: Se importa el diccionario de configuraciones y el tipo base.
+# Ya no se importan clases específicas como Mb52Config, pues no existen.
+from config.settings import TRANSACTION_CONFIGS, TransactionConfig
 
-# --- Importa todos los componentes específicos de las transacciones ---
+# ===================================================================
+# 2. IMPORTACIÓN DE COMPONENTES DE TRANSACCIÓN
+# ===================================================================
+# --- Componentes para MB52 ---
 from pages.mb52_page import MB52Page
 from schemas.mb52 import Mb52FormData
 from services.mb52_service import MB52Service
 
+# --- Componentes para IQ09 ---
 from pages.iq09_page import Iq09Page
 from schemas.iq09 import Iq09FormData
 from services.iq09_service import Iq09Service
 
+# --- Componentes para ZSIN_ORDENES ---
 from pages.zsin_ordenes_page import ZsinOrdenesPage
-# CAMBIO 1: Importamos también el schema de opciones
 from schemas.zsin_ordenes import ZsinOrdenesCriteria, ZsinOrdenesExecutionOptions
 from services.zsin_ordenes_service import ZsinOrdenesService
 
@@ -24,45 +33,59 @@ from services.zsin_ordenes_service import ZsinOrdenesService
 from utils.file_handler import FileHandler
 from utils.print_service import PrintService
 
+# ===================================================================
+# 3. DEFINICIÓN DE LA "RECETA" DE TRANSACCIÓN
+# ===================================================================
 
-# CAMBIO 2: La "Receta" ahora es semánticamente más explícita
-@dataclass
+@dataclass(frozen=True)
 class TransactionRecipe:
-    """Contiene todos los 'ingredientes' para construir un servicio de transacción."""
-    config_class: Type
+    """
+    Contiene todos los 'ingredientes' necesarios para construir
+    un servicio de transacción.
+    
+    A diferencia de la versión anterior, ahora recibe la configuración
+    ya instanciada, cumpliendo con el principio de Inversión de Dependencias.
+    """
+    # CAMBIO 2: Reemplazamos 'config_class' por la instancia de configuración.
+    # El registro ya no es responsable de saber cómo crear la config.
+    config: TransactionConfig
+    
     page_class: Type
     service_class: Type
-    # Se reemplaza 'data_model_class' por dos campos específicos
     criteria_schema: Type
-    options_schema: Optional[Type] = None  # Opcional para transacciones antiguas
+    options_schema: Optional[Type] = None
     extra_dependencies: Optional[Dict[str, Any]] = None
 
+# ===================================================================
+# 4. REGISTRO CENTRALIZADO DE TRANSACCIONES
+# ===================================================================
 
-# --- Registra cada transacción con su receta ---
 TRANSACTION_REGISTRY: Dict[str, TransactionRecipe] = {
+    # CAMBIO 3: La clave del registro ahora coincide con el nombre de la 
+    # sección en el fichero 'config.toml' para mayor consistencia.
     "mb52": TransactionRecipe(
-        config_class=Mb52Config,
+        # CAMBIO 4: Se obtiene la configuración directamente del diccionario importado.
+        # La clave ("MB52") es el 'transaction_code' definido en el TOML.
+        config=TRANSACTION_CONFIGS["MB52"],
         page_class=MB52Page,
         service_class=MB52Service,
-        # CAMBIO 3: Las transacciones antiguas usan el nuevo campo 'criteria_schema'
         criteria_schema=Mb52FormData,
     ),
     "iq09": TransactionRecipe(
-        config_class=Iq09Config,
+        config=TRANSACTION_CONFIGS["IQ09"],
         page_class=Iq09Page,
         service_class=Iq09Service,
         criteria_schema=Iq09FormData,
     ),
-   "zsin_ordenes": TransactionRecipe(
-       config_class=ZsinOrdenesConfig,
-       page_class=ZsinOrdenesPage,
-       service_class=ZsinOrdenesService,
-       # CAMBIO 4: La nueva transacción usa ambos campos para schemas
-       criteria_schema=ZsinOrdenesCriteria,
-       options_schema=ZsinOrdenesExecutionOptions,
-       extra_dependencies={
-           "file_handler": FileHandler(),
-           "print_service": PrintService()
-        }
-   ),
+    "zsin_ordenes": TransactionRecipe(
+        config=TRANSACTION_CONFIGS["ZSIN_ORDENES"],
+        page_class=ZsinOrdenesPage,
+        service_class=ZsinOrdenesService,
+        criteria_schema=ZsinOrdenesCriteria,
+        options_schema=ZsinOrdenesExecutionOptions,
+        extra_dependencies={
+            "file_handler": FileHandler(),
+            "print_service": PrintService()
+        },
+    ),
 }

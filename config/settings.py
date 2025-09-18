@@ -65,6 +65,7 @@ class AppSettings(BaseModel):
 # --- Rutas del Proyecto ---
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 LOCATORS_DIR = PROJECT_ROOT / "locators"
+COMMON_LOCATORS_PATH = LOCATORS_DIR / "common.toml"
 
 # --- Carga de las diferentes fuentes ---
 _config_path = Path(__file__).parent / "config.toml"

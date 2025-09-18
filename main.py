@@ -8,11 +8,10 @@ from config.settings import (
     general_config,
     log_config, 
     env_settings,
-    TRANSACTION_CONFIGS
+    TRANSACTION_CONFIGS, 
+    COMMON_LOCATORS_PATH
 )
 from core.registry import TRANSACTION_REGISTRY
-DEFAULT_BROWSER = general_config.default_browser
-
 from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from core.browser_manager import BrowserManager
 from core.cli_handler import CliHandler
@@ -24,6 +23,8 @@ from core.providers.locators.toml_locator_provider import TomlLocatorProvider
 from covi_auth_lib import LoginService, PlaywrightAdapter, UsernamePasswordProvider
 
 log = logging.getLogger(__name__)
+
+DEFAULT_BROWSER = general_config.default_browser
 
 def main() -> None:
     """Orquesta la ejecución de la aplicación, actuando como la Raíz de Composición."""
@@ -43,9 +44,12 @@ def main() -> None:
     configs = TRANSACTION_CONFIGS
 
     # --- Fábrica agnóstica de locators ---
-    # XXX Creamos los providers inyectando los ficheros concretos y comunes
-    common_provider = TomlLocatorProvider(Path("config/locators/common.toml"))
+    # Le pasamos los locators comunes
+    common_provider = TomlLocatorProvider(COMMON_LOCATORS_PATH)
     locator_factory = LocatorProviderFactory(common_providers=[common_provider])
+
+    print(locator_factory)
+    exit(0)
 
     # XXX Se inyectan las dependencias en el builder.
     # El builder ya no importa sus dependencias; las recibe.
