@@ -1,22 +1,21 @@
-# pages/sap_login_page.py
-# Page Object para la página de inicio de sesión de SAP
+# Fichero: pages/sap_login_page.py
 
+from typing import Any
 from playwright.sync_api import Page
-from core.page_base import PageBase
-from core.providers.base_provider import BaseLocatorProvider
+from pages.sap_page_base import SAPPageBase
 
-class SAPLoginPage(PageBase):
+class SAPLoginPage(SAPPageBase):
     """
     Page Object para la página de inicio de sesión de SAP.
+    Hereda la gestión del provider y elementos comunes de SAPPageBase.
     """
-    # La dependencia es obligatoria
-    def __init__(self, page: Page, locator_provider: BaseLocatorProvider):
-        super().__init__(page)
+    def __init__(self, page: Page, locator_provider: Any):
+        super().__init__(page, locator_provider)
         
-        # Versión explícita, clara y segura
-        self.username_input = page.locator(locator_provider.get('input_user'))
-        self.password_input = page.locator(locator_provider.get('input_password'))
-        self.login_button   = page.locator(locator_provider.get('input_login'))
+        # Los locators usan self._provider, heredado del padre.
+        self.username_input = page.locator(self._provider.get('input_user'))
+        self.password_input = page.locator(self._provider.get('input_password'))
+        self.login_button   = page.locator(self._provider.get('input_login'))
 
     def fill_username(self, username: str):
         self.username_input.fill(username)

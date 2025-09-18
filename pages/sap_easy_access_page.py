@@ -1,8 +1,8 @@
 # Fichero: pages/sap_easy_access_page.py
 # Descripción: Page Object para la pantalla SAP Easy Access.
 
-from core.sap_page_base import SAPPageBase
-from core.providers.base_provider import BaseLocatorProvider
+from pages.sap_page_base import SAPPageBase
+from core.providers.locators.base_locator_provider import BaseLocatorProvider
 
 class SAPEasyAccessPage(SAPPageBase):
     """
@@ -13,7 +13,10 @@ class SAPEasyAccessPage(SAPPageBase):
         super().__init__(page, locator_provider)
         
         # El único locator que esta página necesita
-        self.transaction_input = page.locator(locator_provider.get('transaction_input'))
+        self.transaction_input = self.playwright_page.locator(locator_provider.get('transaction_input'))
+        # FIXME Esto no debería ir aquí, es el formumlario principal de cada página que lo lleve, 
+        # indicador de que está cargada
+        self.form = self.playwright_page.locator(locator_provider.get('common.form_principal'))
 
     def enter_transaction(self, transaction_code: str):
         """
@@ -27,4 +30,5 @@ class SAPEasyAccessPage(SAPPageBase):
         en el campo de la transacción.
         """
         self.transaction_input.press("Enter")
-        self.page.wait_for_load_state("networkidle")
+        # FIXME Como esto no funciona usamos el form self.page.wait_for_load_state("networkidle")
+        self.form.wait_for()

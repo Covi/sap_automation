@@ -1,93 +1,141 @@
 # tests/test_mb52.py
-# Pruebas para el informe MB52 utilizando el servicio y las páginas configuradas
+# Tests funcionales para MB52 utilizando el GenericTransactionBuilder.
+
+# Logging
+import logging
+log = logging.getLogger(__name__)
 
 import pytest
 from pathlib import Path
-from config import SAP_USERNAME, SAP_PASSWORD, Mb52Config
-from utils.logger import log
 
+# --- Imports necesarios ---
+from config import Mb52Config
 from core.browser_manager import BrowserManager
-from core.providers.toml_provider import TomlLocatorProvider
-from core.providers.composite_provider import CompositeLocatorProvider
+# 1. Importa la CLASE del builder, no una instancia
+from core.builders.generic_transaction_builder import GenericTransactionBuilder
 
-from data_models.mb52_models import Mb52FormData
+# La fixture ahora prepara el builder para "mb52"
+@pytest.fixture(scope="function")
 
-from pages.mb52_page import MB52Page
-from pages.sap_easy_access_page import SAPEasyAccessPage
-from pages.sap_login_page import SAPLoginPage
-
-from services.login_service import LoginService
-from services.mb52_service import MB52Service
-from services.transaction_service import TransactionService
-
-@pytest.fixture(scope="module")
-def browser_manager():
+# TEST FIXTURE
+def mb52_builder_and_page():
+    """
+    Prepara el entorno de prueba: inicia el navegador y crea una instancia
+    del GenericTransactionBuilder configurada para 'mb52'.
+    """
     manager = BrowserManager(headless=True)
-    yield manager
+    page = manager.start_browser()
+    
+    # Crea la instancia del builder que quieres probar
+    builder = GenericTransactionBuilder("mb52")
+
+    yield page, builder
+
+    log.info("Cerrando el navegador al finalizar los tests del módulo.")
     manager.close_browser()
 
-@pytest.fixture(scope="module")
-def page(browser_manager):
-    return browser_manager.start_browser()
 
-@pytest.fixture(scope="module")
-def mb52_service(page):
-    # --- 1. Crear los proveedores simples que leen ficheros ---
-    common_provider = TomlLocatorProvider("locators/common.toml")
-    login_provider = TomlLocatorProvider("locators/login.toml")
-    easy_access_provider = TomlLocatorProvider("locators/easy_access.toml")
-    mb52_provider = TomlLocatorProvider("locators/mb52.toml")
-
-    # --- 2. Crear los proveedores COMPUESTOS para las páginas que los necesiten ---
-    # La prioridad la da el orden: primero buscará en el específico, luego en el común.
-    composite_easy_access = CompositeLocatorProvider([easy_access_provider, common_provider])
-    composite_mb52 = CompositeLocatorProvider([mb52_provider, common_provider])
-
-    # --- 3. Inyectar el proveedor ÚNICO y ya compuesto en cada página ---
-    login_page = SAPLoginPage(page, locator_provider=login_provider)
-    easy_access_page = SAPEasyAccessPage(page, locator_provider=composite_easy_access)
-    mb52_page = MB52Page(page, locator_provider=composite_mb52)
-
-    # --- 4. Crear los servicios ---
-    login_service = LoginService(login_page, easy_access_page)
-    transaction_service = TransactionService(easy_access_page)
-    service = MB52Service(transaction_service, mb52_page)
-
-    # --- 5. Ejecutar el setup (login) ---
-    login_service.login(SAP_USERNAME, SAP_PASSWORD)
-    
-    return service
-
-# --- La Tarea ---
-def test_generar_informe_mb52(mb52_service, page):
+# TEST CON VALORES POR DEFECTO
+def test_run_service_with_defaults(mb52_builder_and_page):
     """
-    Tarea que genera y descarga un informe de stock con la transacción MB52.
+    Prueba el flujo completo con valores por defecto.
+    Verifica que al ejecutar run_service sin parámetros, se crea el fichero esperado.
     """
+    page, builder = mb52_builder_and_page
+    log.info("Iniciando test de MB52 con valores por defecto...")
 
-    log.info("Iniciando la tarea de generación de informe MB52...")
+    # 3. Define los inputs (en este caso, ninguno para probar los defaults)
+    params = {}
 
-    # El test es el único que conoce la configuración
-    datos_informe = Mb52FormData(centro=Mb52Config.DEFAULT_CENTRO)
-
-    # [CAMBIO] Construir la ruta completa y el nombre del fichero
+    # Define el fichero de salida esperado
     downloads_dir = Path(Mb52Config.DOWNLOAD_DIR)
     downloads_dir.mkdir(parents=True, exist_ok=True)
-    fichero_de_salida_nombre = Mb52Config.EXPORT_FILENAME or f"mb52_{datos_informe.centro}.xlsx"
-    fichero_de_salida_path = downloads_dir / fichero_de_salida_nombre
+    expected_file = downloads_dir / Mb52Config.EXPORT_FILENAME
+
+    # Limpia el fichero si existía de una ejecución anterior
+    if expected_file.exists():
+        expected_file.unlink()
+
+    # 4. Ejecuta el builder, que orquesta todo el proceso
+    try:
+        service = builder.build_service(page)
+        builder.run_service(service, params)
+
+        # 5. Comprueba el resultado final
+        assert expected_file.exists(), f"El fichero esperado {expected_file} no fue creado."
+        log.info(f"Test completado. Fichero por defecto creado en: {expected_file}")
+
+    finally:
+        # Limpia el fichero creado para no afectar otros tests
+        if expected_file.exists():
+            expected_file.unlink()
+
+# TEST SOBREESCRIBIENDO PARÁMETROS
+def test_run_service_with_overrides(mb52_builder_and_page):
+    """
+    Prueba el flujo completo pasando parámetros personalizados.
+    Verifica que al ejecutar run_service con un 'output' específico, se crea ese fichero.
+    """
+    page, builder = mb52_builder_and_page
+    log.info("Iniciando test de MB52 con parámetros personalizados...")
+
+    # Define los inputs personalizados
+    custom_filename = "informe_personalizado.xlsx"
+    params = {
+        # CAMBIO: Usa un centro que sepas que tiene datos para asegurar un resultado exitoso
+        "centro": Mb52Config.DEFAULT_CENTRO, # o E086 
+        # Mantenemos el 'output' personalizado para probar que el override funciona
+        "output": custom_filename
+    }
+
+    # Define el fichero de salida esperado
+    downloads_dir = Path(Mb52Config.DOWNLOAD_DIR)
+    downloads_dir.mkdir(parents=True, exist_ok=True)
+    expected_file = downloads_dir / custom_filename
+
+    if expected_file.exists():
+        expected_file.unlink()
+
+    # Ejecuta el builder con los parámetros personalizados
+    try:
+        service = builder.build_service(page)
+        builder.run_service(service, params)
+
+        # Comprueba que el fichero con el nombre personalizado existe
+        assert expected_file.exists(), f"El fichero personalizado {expected_file} no fue creado."
+        log.info(f"Test completado. Fichero personalizado creado en: {expected_file}")
+
+    finally:
+        if expected_file.exists():
+            expected_file.unlink()
 
 
-    # El test inyecta la configuración en el servicio
-    mb52_service.generar_informe(datos_informe)
-
-    # Por esta, que es más precisa y coincide con el título real:
-    assert page.title() == "Visualizar stocks en almacén por material"
-
-    log.info(f"\nHoja de stock para el centro {datos_informe.centro} generada con éxito.")
-
-    # [CAMBIO] Pasar la ruta completa y el nombre al servicio
-    mb52_service.descargar_informe(str(fichero_de_salida_path), fichero_de_salida_nombre)
-
-    log.info(f"\nHoja de stock para el centro {datos_informe.centro} descargado con éxito.")
+# --- TEST USANDO MONKEYPATCH ---
+def test_run_service_with_temp_directory(mb52_builder_and_page, monkeypatch, tmp_path):
+    """
+    Prueba que el fichero se descarga en un directorio temporal y personalizado.
+    """
+    page, builder = mb52_builder_and_page
+    log.info("Iniciando test de MB52 con directorio de descarga temporal...")
     
-    # [CAMBIO] Añadir una verificación de que el fichero existe
-    assert fichero_de_salida_path.exists()
+    # tmp_path es otra fixture de pytest que crea un directorio temporal único para el test
+    temp_dir = tmp_path
+    log.info(f"Usando directorio temporal: {temp_dir}")
+
+    # Esta es la "nota adhesiva":
+    # Le decimos a monkeypatch que "parchee" el atributo 'DOWNLOAD_DIR' de la clase 'Mb52Config'
+    # con el valor de nuestro directorio temporal.
+    monkeypatch.setattr(Mb52Config, 'DOWNLOAD_DIR', str(temp_dir))
+    
+    params = {} # Usamos parámetros por defecto
+    expected_file = temp_dir / Mb52Config.EXPORT_FILENAME
+
+    # No hace falta limpiar el fichero antes porque tmp_path siempre está vacío
+    
+    # El builder, al ejecutarse, leerá la ruta parcheada por monkeypatch
+    service = builder.build_service(page)
+    builder.run_service(service, params)
+
+    # La aserción comprueba que el fichero se creó en el directorio temporal
+    assert expected_file.exists(), f"El fichero {expected_file} no fue creado en el dir temporal."
+    log.info(f"Test completado. Fichero creado en el directorio temporal: {expected_file}")

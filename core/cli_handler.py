@@ -1,0 +1,228 @@
+import argparse
+import logging
+import sys
+import difflib
+from dataclasses import dataclass, fields
+from typing import Dict, Any, Optional
+
+log = logging.getLogger(__name__)
+
+
+@dataclass
+class RunConfig:
+    """Contiene todos los datos necesarios para ejecutar una transacción."""
+    transaction_name: str
+    params: Dict[str, Any]
+    browser: str
+    headless: bool
+    log_level: Optional[str]
+    download_dir: Optional[str]
+
+
+class CliHandler:
+    """
+    Gestiona la interfaz de línea de comandos (CLI) para ejecutar transacciones.
+
+    Principios aplicados:
+        - SRP: esta clase solo se ocupa del CLI.
+        - DIP: recibe el registro de transacciones desde fuera.
+    """
+
+    def __init__(self, browser, transactions_registry: dict[str, Any]):
+        """
+        Inicializa el manejador CLI.
+
+        Args:
+            browser: Navegador por defecto a usar.
+            transactions_registry: Diccionario con las transacciones disponibles.
+
+        Nota:
+            Normalizamos las claves del registro a minúsculas
+            para que el matching sea insensible a mayúsculas/minúsculas.
+        """
+        self.browser = browser
+        self.transactions_registry = {k.lower(): v for k, v in transactions_registry.items()}
+        self.available_trxs = list(self.transactions_registry.keys())
+        self.parser = self._create_parser()
+
+    def _create_parser(self) -> argparse.ArgumentParser:
+        """Crea y configura el parser de argumentos."""
+        parser = argparse.ArgumentParser(
+            description="Automatización SAP Web GUI",
+            formatter_class=argparse.RawTextHelpFormatter
+        )
+        parser.add_argument("transaccion", nargs='?', default=None, help="Nombre de la transacción a ejecutar.")
+        parser.add_argument("params", nargs='*', help="Parámetros 'clave=valor' para la transacción.")
+        parser.add_argument(
+            '-i', '--info',
+            action='store_true',
+            help="Muestra los parámetros disponibles para una transacción y sale."
+        )
+        parser.add_argument("-l", "--list", action='store_true', help="Lista las transacciones disponibles y sale.")
+        parser.add_argument(
+            '-b', '--browser',
+            type=str,
+            choices=['firefox', 'chromium', 'webkit'],
+            default=self.browser,
+            help=f"Navegador a usar (defecto: {self.browser})."
+        )
+        parser.add_argument('-hd', '--headless', action='store_true', help="Ejecuta el navegador en modo headless (sin UI).")
+        parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="Establece el nivel de log.")
+        parser.add_argument('-y', '--yes', action='store_true', help="Asume 'sí' en todas las preguntas de confirmación.")
+        parser.add_argument('-u', '--unattended', action='store_true', help="Modo desatendido para servicios. Exige nombres exactos.")
+        parser.add_argument('--download-dir', type=str, help="Sobrescribe el directorio de descarga por defecto.")
+        return parser
+
+    def _parse_params(self, param_list: list[str]) -> Dict[str, Any]:
+        """Convierte los parámetros CLI en un diccionario clave/valor."""
+        params: Dict[str, Any] = {}
+        for p in param_list:
+            if '=' in p:
+                k, v = p.split('=', 1)
+                params[k] = v
+            else:
+                params[p] = True
+        return params
+
+    def list_transactions(self):
+        """Imprime las transacciones disponibles."""
+        print("\nTransacciones disponibles:")
+        for trx in self.available_trxs:
+            print(f"  - {trx}")
+        print()
+
+    def show_transaction_info(self, trx_name: str):
+        """
+        Inspecciona y muestra los parámetros del formulario y configuración.
+
+        Args:
+            trx_name: Nombre de la transacción (insensible a mayúsculas).
+        """
+        trx_name = trx_name.lower()
+        if trx_name not in self.available_trxs:
+            log.error(f"Transacción '{trx_name}' no encontrada.")
+            return
+
+        recipe = self.transactions_registry[trx_name]
+
+        # --- 1. Parámetros del Formulario (Pydantic model_fields) ---
+        form_model = recipe.data_model_class
+        print(f"\nParámetros del Formulario para '{trx_name}':")
+        for name, info in form_model.model_fields.items():
+            if info.is_required():
+                print(f"    - {name} (Obligatorio)")
+            else:
+                print(f"    - {name} (Opcional, por defecto: {info.default})")
+
+        # --- 2. Parámetros de Configuración (dataclasses fields) ---
+        config_class = recipe.config_class
+        config_instance = config_class()
+        print(f"\nParámetros de Configuración para '{trx_name}':")
+        for field in fields(config_class):
+            if field.metadata.get('sensitive'):
+                print(f"    - {field.name} (Valor: '********')")
+            else:
+                current_value = getattr(config_instance, field.name)
+                print(f"    - {field.name} (Valor por defecto: '{current_value}')")
+        print()
+
+    def resolve_transaction_name(self, name_input: str, unattended: bool, assume_yes: bool) -> Optional[str]:
+        """
+        Resuelve el nombre de la transacción según el modo de ejecución.
+
+        Args:
+            name_input: Nombre introducido por el usuario.
+            unattended: Si es modo desatendido (exige coincidencia exacta).
+            assume_yes: Si se deben aceptar sugerencias automáticamente.
+
+        Returns:
+            Nombre normalizado de la transacción o None si no se pudo resolver.
+        """
+        if name_input.lower() in self.transactions_registry:
+            return name_input.lower()
+
+        if unattended:
+            log.error(f"Modo desatendido: Se requiere un nombre exacto. '{name_input}' no es válido.")
+            return None
+
+        possible_matches = [trx for trx in self.available_trxs if trx.startswith(name_input.lower())]
+
+        if len(possible_matches) == 1:
+            resolved_name = possible_matches[0]
+            if assume_yes:
+                log.info(f"Coincidencia única para '{name_input}': '{resolved_name}'. Asumiendo 'sí'.")
+                return resolved_name
+            try:
+                sys.stdout.write(f"¿Quisiste decir '{resolved_name}'? [S/n]: ")
+                sys.stdout.flush()
+                confirm = sys.stdin.readline().strip()
+                return resolved_name if confirm.lower() in ('s', 'si', '') else None
+            except (KeyboardInterrupt, EOFError):
+                sys.stdout.write("\n")
+                log.warning("Operación cancelada.")
+                return None
+        elif len(possible_matches) > 1:
+            log.warning(f"'{name_input}' es ambiguo. Coincide con: {', '.join(possible_matches)}")
+        else:
+            # Intento extra: fuzzy match con difflib
+            close_matches = difflib.get_close_matches(name_input.lower(), self.available_trxs, n=1, cutoff=0.6)
+            if close_matches:
+                suggestion = close_matches[0]
+                if assume_yes:
+                    log.info(f"Sugerencia: usando '{suggestion}' en lugar de '{name_input}'.")
+                    return suggestion
+                try:
+                    sys.stdout.write(f"No se encontró '{name_input}'. ¿Quisiste decir '{suggestion}'? [S/n]: ")
+                    sys.stdout.flush()
+                    confirm = sys.stdin.readline().strip()
+                    return suggestion if confirm.lower() in ('s', 'si', '') else None
+                except (KeyboardInterrupt, EOFError):
+                    sys.stdout.write("\n")
+                    log.warning("Operación cancelada.")
+                    return None
+            log.error(f"No se encontró ninguna transacción que coincida con '{name_input}'.")
+
+        return None
+
+    def handle_request(self) -> Optional[RunConfig]:
+        """
+        Parsea argumentos y devuelve la configuración de ejecución.
+
+        Returns:
+            RunConfig con los datos para ejecutar la transacción, o None si no aplica.
+        """
+        args = self.parser.parse_args()
+
+        if args.list:
+            self.list_transactions()
+            return None
+
+        if args.info:
+            if not args.transaccion:
+                log.error("Debes especificar una transacción para ver su información (ej: main.py mb52 --info).")
+            else:
+                self.show_transaction_info(args.transaccion)
+            return None
+
+        if not args.transaccion:
+            log.warning("No se especificó una transacción.")
+            self.parser.print_help()
+            return None
+
+        resolved_trx_name = self.resolve_transaction_name(
+            args.transaccion,
+            unattended=args.unattended,
+            assume_yes=args.yes
+        )
+
+        if not resolved_trx_name:
+            return None
+
+        return RunConfig(
+            transaction_name=resolved_trx_name,
+            params=self._parse_params(args.params),
+            browser=args.browser,
+            headless=args.headless,
+            log_level=args.log_level,
+            download_dir=args.download_dir
+        )

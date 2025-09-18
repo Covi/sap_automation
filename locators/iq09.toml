@@ -1,0 +1,9 @@
+# Fichero: locators/iq09.toml
+# Descripción: Locators para la transacción IQ09.
+
+[form]
+centro   = "[id='M0:46:::37:34']"
+n_serie  = "[id='M0:46:::29:34']"
+
+[results]
+tabla_resultados = 'table[ct="STCS"][role="grid"]'

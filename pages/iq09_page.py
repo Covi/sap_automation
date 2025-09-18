@@ -3,27 +3,27 @@ from typing import Any, Dict
 
 from playwright.sync_api import Download, TimeoutError, Error
 
-from pages.sap_report_page import SAPReportPage
+from .sap_report_page import SAPReportPage
 
 # Componentes y Estrategias
 from core.components.form.sap_form_strategies import SimpleFillStrategy, FormFillingStrategy
-from core.components.dialog.sap_export_dialog import SAPExportDialog
+from core.components.menu.sap_menu_component import SAPMenuComponent
+from core.components.dialog.sap_menu_export_dialog import SAPMenuExportDialog
 
 log = logging.getLogger(__name__)
 
-class MB52Page(SAPReportPage):
+class Iq09Page(SAPReportPage):
     """
-    Page Object Model para la transacción MB52 de SAP.
+    Page Object Model para la transacción IQ09 de SAP.
     Hereda la lógica común de informes de SAPReportPage.
     """
     def __init__(self, page, locator_provider: Any):
         super().__init__(page, locator_provider)
 
-        # --- Definición de componentes y locators específicos de MB52 ---
+        # --- Definición de componentes y locators específicos de IQ09 ---
         self.results_table = self.playwright_page.locator(self._provider.get('results.tabla_resultados'))
-        self.confirm_button = self.playwright_page.locator(self._provider.get('common.continuar'))
-        self.download_button = self.playwright_page.locator(self._provider.get('buttons.descargar_hoja'))
-        self.export_dialog = SAPExportDialog(self)
+        self.menu = SAPMenuComponent(self)
+        self.export_dialog = SAPMenuExportDialog(self)
 
     # --- Implementación de las propiedades abstractas obligatorias ---
 
@@ -31,9 +31,8 @@ class MB52Page(SAPReportPage):
     def form_locators(self) -> Dict[str, Any]:
         """Provee el mapa de locators del formulario para la clase base."""
         return {
-            'material': self.playwright_page.locator(self._provider.get('form.material')),
             'centro': self.playwright_page.locator(self._provider.get('form.centro')),
-            'almacen': self.playwright_page.locator(self._provider.get('form.almacen'))
+            'n_serie': self.playwright_page.locator(self._provider.get('form.n_serie')),
         }
 
     @property
@@ -44,24 +43,22 @@ class MB52Page(SAPReportPage):
     # --- Implementación de los métodos abstractos obligatorios ---
 
     def _esperar_resultados(self, timeout: int = 30000):
-        """Implementa la lógica de espera específica de MB52."""
-        self.confirm_button.wait_for(timeout=timeout)
-        self.confirm_button.click()
+        """Implementa la lógica de espera específica de IQ09."""
         self.results_table.wait_for(timeout=timeout)
+        log.debug("Tabla de resultados de IQ09 visible.")
+
+    # --- Métodos específicos de IQ09 que se mantienen ---
 
     def is_results_table_visible(self) -> bool:
         """Comprueba si la tabla de resultados del informe está visible."""
         return self.results_table.is_visible()
 
-    def descargar_hoja_calculo(self, fichero_de_salida_nombre: str) -> Download:
-        """
-        Orquesta la descarga abriendo el diálogo y delegando su gestión al componente.
-        """
+    def descargar_informe(self) -> Download:
+        """Inicia la descarga a través de la navegación por el menú de SAP."""
+        log.info("Iniciando descarga para IQ09 a través del menú SAP...")
         try:
-            with self.playwright_page.expect_download() as download_info:
-                self.download_button.click()
-                self.export_dialog.completar_dialogo(fichero_de_salida_nombre)
-            return download_info.value
+            self.menu.navigate_to("Menú", "Lista", "Grabar", "Fichero...")
+            return self.export_dialog.exportar_como_spreadsheet()
         except (TimeoutError, Error) as e:
-            log.error(f"El proceso de descarga para MB52 ha fallado: {e}")
+            log.error(f"El proceso de descarga para IQ09 ha fallado: {e}")
             raise

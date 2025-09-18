@@ -1,5 +1,7 @@
 # Archivos generados por Python
 __pycache__/
+*.
+!.gitignore
 *.pyc
 *.pyo
 *.egg-info/
