@@ -69,26 +69,36 @@ class CliHandler:
             return
 
         recipe = TRANSACTION_REGISTRY[trx_name]
-        
-        # --- 1. Parámetros del Formulario (Pydantic model_fields) ---
-        form_model = recipe.data_model_class
-        
+
+        # --- 1. Parámetros del Formulario (Pydantic Schemas) ---
         print(f"\nParámetros del Formulario para '{trx_name}':")
-        
-        for name, info in form_model.model_fields.items():
+
+        # Procesa el schema de criterios, que siempre está presente
+        criteria_schema = recipe.criteria_schema
+        print("  --- Criterios ---")
+        for name, info in criteria_schema.model_fields.items():
             if info.is_required():
                 print(f"    - {name} (Obligatorio)")
             else:
                 print(f"    - {name} (Opcional, por defecto: {info.default})")
-        
+
+        # Procesa el schema de opciones, solo si la transacción lo define
+        if recipe.options_schema:
+            options_schema = recipe.options_schema
+            print("\n  --- Opciones ---")
+            for name, info in options_schema.model_fields.items():
+                if info.is_required():
+                    print(f"    - {name} (Obligatorio)")
+                else:
+                    print(f"    - {name} (Opcional, por defecto: {info.default})")
+
         # --- 2. Parámetros de Configuración (dataclasses fields) ---
         config_class = recipe.config_class
         config_instance = config_class()
-        
+
         print(f"\nParámetros de Configuración para '{trx_name}':")
-        
+
         for field in fields(config_class):
-            # CAMBIO: Comprobamos los metadatos para ocultar campos sensibles
             if field.metadata.get('sensitive'):
                 print(f"    - {field.name} (Valor: '********')")
             else:

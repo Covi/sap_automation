@@ -35,6 +35,7 @@ class TransactionRecipe:
     # Se reemplaza 'data_model_class' por dos campos específicos
     criteria_schema: Type
     options_schema: Optional[Type] = None  # Opcional para transacciones antiguas
+
     extra_dependencies: Optional[Dict[str, Any]] = None
 
 

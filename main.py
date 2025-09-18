@@ -1,15 +1,13 @@
 # main.py
 
 import logging
-from core.browser_manager import BrowserManager
-from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from core.logging.logger_config import setup_logging
 from core.cli_handler import CliHandler
-from core.providers.locator_provider_factory import LocatorProviderFactory
 from config import BaseConfig, BASE_URL
-
-# --- IMPORTACIONES DE TU NUEVA LIBRERÍA ---
 from covi_auth_lib import LoginService, PlaywrightAdapter,  UsernamePasswordProvider
+from core.browser_manager import BrowserManager
+from core.providers.locator_provider_factory import LocatorProviderFactory
+from core.builders.generic_transaction_builder import GenericTransactionBuilder
 
 log = logging.getLogger(__name__)
 
