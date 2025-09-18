@@ -44,16 +44,16 @@ def main() -> None:
         password_selector = login_provider.get("form.input_password")
         submit_selector = login_provider.get("form.input_login")
 
-        adapter = PlaywrightAdapter(page)
+        auth_adapter = PlaywrightAdapter(page)
         auth_provider = UsernamePasswordProvider(
-            ui_adapter=adapter,
+            ui_adapter=auth_adapter,
             user_selector=user_selector,
             password_selector=password_selector,
             submit_selector=submit_selector
         )
         login_service = LoginService(provider=auth_provider)
-        
         credentials = BaseConfig()
+
         if not login_service.login(user=credentials.SAP_USERNAME, password=credentials.SAP_PASSWORD):
             raise RuntimeError("El proceso de login ha fallado. Abortando transacción.")
         
