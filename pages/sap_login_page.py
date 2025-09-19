@@ -13,9 +13,10 @@ class SAPLoginPage(SAPPageBase):
         super().__init__(page, locator_provider)
         
         # Los locators usan self._provider, heredado del padre.
-        self.username_input = page.locator(self._provider.get('input_user'))
-        self.password_input = page.locator(self._provider.get('input_password'))
-        self.login_button   = page.locator(self._provider.get('input_login'))
+        self.username_input = page.locator(self._provider.get('form.input_user'))
+        self.password_input = page.locator(self._provider.get('form.input_password'))
+        self.login_button   = page.locator(self._provider.get('form.input_login'))
+
 
     def fill_username(self, username: str):
         self.username_input.fill(username)
