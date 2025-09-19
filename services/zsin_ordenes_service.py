@@ -85,7 +85,7 @@ class ZsinOrdenesService:
 
                 filename = options.output_filename
                 path = options.output_path
-                
+
                 log.debug(f"Esperando fichero de descarga que contenga: '{filename}'")
                 pdf_bytes = self._page.descargar_pdf(filename)
                 pdf_path = self._file_handler.save_with_timestamp(pdf_bytes, path, filename)
