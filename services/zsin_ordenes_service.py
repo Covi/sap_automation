@@ -57,11 +57,11 @@ class ZsinOrdenesService:
             # Modelo
             payload = SapPayloadBuilder.build_payload(criteria)
 
-            #self._page.esperar_formulario()
+            # FIXME esto falla self._page.esperar_formulario()
             self._page.rellenar_formulario(payload)
+            # TODO FIXME DEBUG self._page.pause()
             self._page.ejecutar()
             total = self._page.obtener_resultados()
-
             # TODO FIXME DEBUG self._page.pause()
 
             if total < 1:
