@@ -20,7 +20,7 @@ class RunConfig:
     headless: bool
     log_level: Optional[str]
     download_dir: Optional[str]
-
+    persistent_session: bool = False  # <--- AÑADE ESTA LÍNEA
 
 class CliHandler:
     def __init__(self):
@@ -47,7 +47,13 @@ class CliHandler:
         parser.add_argument('-y', '--yes', action='store_true', help="Asume 'sí' en todas las preguntas de confirmación.")
         parser.add_argument('-u', '--unattended', action='store_true', help="Modo desatendido para servicios. Exige nombres exactos.")
         parser.add_argument('--download-dir', type=str, help="Sobrescribe el directorio de descarga por defecto.")
-        
+        parser.add_argument(
+            "-p",
+            "--persistent",
+            action="store_true",  # <--- Esto hace que si el flag está, el valor sea True
+            help="Activa la estrategia de persistencia para mantener el navegador abierto."
+        )
+
         return parser
 
     def _parse_params(self, param_list: list[str]) -> Dict[str, Any]:
@@ -172,5 +178,6 @@ class CliHandler:
             browser=args.browser,
             headless=args.headless,
             log_level=args.log_level, 
-            download_dir=args.download_dir
+            download_dir=args.download_dir, 
+            persistent_session=args.persistent
         )

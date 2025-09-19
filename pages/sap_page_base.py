@@ -14,7 +14,12 @@ class SAPPageBase(PageBase):
     def __init__(self, page, locator_provider: BaseLocatorProvider):
         super().__init__(page)
         self._provider = locator_provider
-        
+
+        # ==========================================================
+        # Este es el hogar correcto para los locators comunes del form.
+        self.form = self.playwright_page.locator(self._provider.get('common.form_principal'))
+        # ==========================================================
+
         # Elementos comunes específicos de la UI de SAP
         self.status_bar = self.playwright_page.locator(self._provider.get('common.status_bar'))
         self.execute_button = self.playwright_page.locator(self._provider.get('common.ejecutar'))
