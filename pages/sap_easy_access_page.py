@@ -11,12 +11,21 @@ class SAPEasyAccessPage(SAPPageBase):
     """
     def __init__(self, page, locator_provider: BaseLocatorProvider):
         super().__init__(page, locator_provider)
-        
         # El único locator que esta página necesita
         self.transaction_input = self.playwright_page.locator(locator_provider.get('transaction_input'))
-        # FIXME Esto no debería ir aquí, es el formumlario principal de cada página que lo lleve, 
-        # indicador de que está cargada
-        self.form = self.playwright_page.locator(locator_provider.get('common.form_principal'))
+
+    def is_logged_in(self) -> bool:
+        """
+        Comprueba si la sesión está activa buscando un elemento único
+        de esta página (como el campo de transacción).
+        """
+        # Asegúrate de que self.transaction_input es un locator que ya tienes definido
+        # en el __init__ de esta clase.
+        try:
+            self.transaction_input.wait_for(timeout=3000)
+            return True
+        except Exception:
+            return False
 
     def enter_transaction(self, transaction_code: str):
         """

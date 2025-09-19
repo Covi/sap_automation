@@ -1,45 +1,61 @@
-# core/browser_manager.py
-# Módulo para gestionar el navegador y la página con Playwright.
+# core/browser_manager.py (VERSIÓN FINAL Y DEFINITIVA)
 
-from playwright.sync_api import sync_playwright, Browser, Page
+import logging
+from typing import Optional
+from playwright.sync_api import Browser, Page, BrowserContext
+
+# Importaciones de los protocolos que hemos definido
+from core.protocols.browser_factory_protocol import BrowserFactory
+from core.protocols.closing_strategy_protocol import ClosingStrategy
+
+log = logging.getLogger(__name__)
 
 class BrowserManager:
     """
-    Gestiona el ciclo de vida del navegador y la página con Playwright.
-    Permite elegir el tipo de navegador y si se ejecuta en headless.
+    Gestiona el ciclo de vida de un navegador y sus contextos.
+    Usa el patrón Strategy para el cierre y permite la persistencia de sesión.
     """
-    def __init__(self, browser_type: str = "firefox", headless: bool = True):
-        self._playwright = None
-        self._browser = None
-        self._page = None
+    def __init__(
+        self,
+        factory: BrowserFactory,
+        closing_strategy: ClosingStrategy,
+        headless: bool = True
+    ):
+        self.factory = factory
+        self.closing_strategy = closing_strategy
         self.headless = headless
-        self.browser_type = browser_type  # "firefox", "chromium" o "webkit"
+        self._browser: Optional[Browser] = None
+        self._context: Optional[BrowserContext] = None
+        self._page: Optional[Page] = None
 
-    def start_browser(self) -> Page:
+    def start_browser_with_session(self, storage_state_path: Optional[str] = None) -> Page:
         """
-        Inicia Playwright, lanza el navegador elegido y crea una nueva página.
+        Inicia el navegador y crea una página dentro de un contexto.
+        Carga el estado de la sesión si se proporciona la ruta.
         """
-        self._playwright = sync_playwright().start()
+        if not self._browser or not self._browser.is_connected():
+            self._browser = self.factory.create_browser(self.headless)
 
-        if self.browser_type == "firefox":
-            self._browser = self._playwright.firefox.launch(headless=self.headless)
-        elif self.browser_type == "chromium":
-            self._browser = self._playwright.chromium.launch(headless=self.headless)
-        elif self.browser_type == "webkit":
-            self._browser = self._playwright.webkit.launch(headless=self.headless)
-        else:
-            raise ValueError(f"Navegador desconocido: {self.browser_type}")
-
-        self._page = self._browser.new_page()
+        self._context = self._browser.new_context(storage_state=storage_state_path)
+        self._page = self._context.new_page()
+        
         return self._page
+
+    def save_session(self, storage_state_path: str):
+        """Guarda el estado de la sesión del contexto actual en un fichero."""
+        if self._context:
+            self._context.storage_state(path=storage_state_path)
+            log.info(f"Estado de la sesión guardado en {storage_state_path}")
+        else:
+            log.warning("No hay un contexto activo para guardar la sesión.")
 
     def close_browser(self):
         """
-        Cierra la página y el navegador, y detiene Playwright.
+        Delega la operación de cierre a la estrategia configurada.
         """
-        if self._page and not self._page.is_closed():
-            self._page.close()
-        if self._browser and self._browser.is_connected():
-            self._browser.close()
-        if self._playwright:
-            self._playwright.stop()
+        self.closing_strategy.close(self._browser, self._page, self.factory)
+        # Limpiamos referencias por si la estrategia persistente no las cierra.
+        if self._browser and not self._browser.is_connected():
+            self._browser = None
+        if self._page and self._page.is_closed():
+            self._page = None
