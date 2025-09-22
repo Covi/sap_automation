@@ -16,16 +16,20 @@ class SAPPageBase(PageBase):
         self._provider = locator_provider
 
         # ==========================================================
-        # Este es el hogar correcto para los locators comunes del form.
-        self.form = self.playwright_page.locator(self._provider.get('common.form_principal'))
-        # ==========================================================
+        # LOCATORS
 
         # Elementos comunes específicos de la UI de SAP
         self.status_bar = self.playwright_page.locator(self._provider.get('common.status_bar'))
         self.execute_button = self.playwright_page.locator(self._provider.get('common.ejecutar'))
+        self.trx_code_input = self.playwright_page.locator(self._provider.get('common.trx_code_input'))
+
+        # Indicador de carga (loading box) que aparece en muchas pantallas SAP
         self.load_indicator = self.playwright_page.locator(self._provider.get('common.cargando'))
 
-        self.loading_indicator = self.playwright_page.locator("#sap-ui-blocklayer-popup")
+        # Formulario principal de prácticamente todas las pantallas SAP
+        self.form = self.playwright_page.locator(self._provider.get('common.form_principal'))
+        # ==========================================================
+
 
     # --- Métodos de Acción Específicos de SAP ---
     
@@ -38,23 +42,6 @@ class SAPPageBase(PageBase):
         """Hace clic en el botón 'Ejecutar' (F8) de SAP."""
         self.execute_button.click()
 
-    # --- Método de espera robusto ---
-    # FIXME: No va
-    def _loading_disappear(self, timeout: int = 60000):
-        """
-        Espera a que el indicador de carga de SAP desaparezca.
-        Esta es la forma más robusta de esperar a que una acción termine.
-        """
-        log.info("Esperando a que el indicador de carga desaparezca...")
-        try:
-            # Esperamos a que el elemento esté oculto o desasociado del DOM.
-            self.load_indicator.wait_for(state="hidden", timeout=timeout)
-            log.info("Indicador de carga ha desaparecido. La página está lista.")
-        except PlaywrightTimeoutError:
-            log.error("El indicador de carga no ha desaparecido en el tiempo esperado.")
-            # Opcional: Podrías querer que el script falle aquí si la carga es infinita.
-            raise
-
     def wait_for_page_to_be_ready(self, timeout: int = 30000):
         """
         Espera a que el indicador de carga principal de SAP desaparezca.
@@ -63,7 +50,7 @@ class SAPPageBase(PageBase):
         log.info("Esperando a que la página esté completamente cargada y sin bloqueos...")
         try:
             # Esperamos a que el bloqueador aparezca primero (puede ser instantáneo)
-            self.loading_indicator.wait_for(state='visible', timeout=2000)
+            self.load_indicator.wait_for(state='visible', timeout=2000)
             log.debug("Indicador de carga detectado, esperando a que desaparezca.")
         except Exception:
             # Si no aparece en 2s, asumimos que la página ya estaba lista.
@@ -71,5 +58,17 @@ class SAPPageBase(PageBase):
             return
 
         # Ahora esperamos a que desaparezca
-        self.loading_indicator.wait_for(state='hidden', timeout=timeout)
+        self.load_indicator.wait_for(state='hidden', timeout=timeout)
         log.info("Indicador de carga ha desaparecido. La página está lista.")
+
+    def wait_for_form(self, timeout: int = 10000):
+        """
+        Espera a que el formulario principal esté visible.
+        Úsalo solo si la página realmente tiene formulario.
+        """
+        log.info("Esperando a que el formulario principal esté visible...")
+        try:
+            self.form.wait_for(state="visible", timeout=timeout)
+            log.info("Formulario principal visible.")
+        except Exception as e:
+            log.warning(f"No se encontró el formulario principal: {e}")

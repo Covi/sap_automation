@@ -87,7 +87,7 @@ def main() -> None:
             manager.save_session(STATE_FILE)
         else:
             log.info("Sesión recuperada con éxito desde el fichero de estado.")
-        
+
         # --- Transacción ---
         builder = GenericTransactionBuilder(run_config.transaction_name)
         transaction_service = builder.build_service(page)
