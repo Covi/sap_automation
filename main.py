@@ -1,7 +1,6 @@
 # main.py (VERSIÓN FINAL Y CORRECTA)
 
-import logging
-import os
+import logging, os, sys
 from core.logging.logger_config import setup_logging
 from core.cli_handler import CliHandler
 from config import BaseConfig, BASE_URL
@@ -22,8 +21,10 @@ from services.session_service import SessionService
 from core.builders.generic_transaction_builder import GenericTransactionBuilder
 from core.providers.locator_provider_factory import LocatorProviderFactory
 
-
+# Configuración del Logger
 log = logging.getLogger(__name__)
+
+# Archivo para guardar el estado de la sesión
 STATE_FILE = "auth_state.json"
 
 def main() -> None:
@@ -95,6 +96,7 @@ def main() -> None:
 
     except Exception as e:
         log.error(f"Error fatal en la ejecución: {e}", exc_info=True)
+        sys.exit(1) # Salida con código de error
     finally:
         log.info("Ejecutando estrategia de cierre del navegador.")
         # --- El cierre SIEMPRE se llama. La estrategia decide qué hacer. ---
