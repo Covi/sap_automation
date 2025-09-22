@@ -25,6 +25,8 @@ class SAPPageBase(PageBase):
         self.execute_button = self.playwright_page.locator(self._provider.get('common.ejecutar'))
         self.load_indicator = self.playwright_page.locator(self._provider.get('common.cargando'))
 
+        self.loading_indicator = self.playwright_page.locator("#sap-ui-blocklayer-popup")
+
     # --- Métodos de Acción Específicos de SAP ---
     
     def get_status_bar_text(self) -> str:
@@ -37,6 +39,7 @@ class SAPPageBase(PageBase):
         self.execute_button.click()
 
     # --- Método de espera robusto ---
+    # FIXME: No va
     def _loading_disappear(self, timeout: int = 60000):
         """
         Espera a que el indicador de carga de SAP desaparezca.
@@ -51,3 +54,22 @@ class SAPPageBase(PageBase):
             log.error("El indicador de carga no ha desaparecido en el tiempo esperado.")
             # Opcional: Podrías querer que el script falle aquí si la carga es infinita.
             raise
+
+    def wait_for_page_to_be_ready(self, timeout: int = 30000):
+        """
+        Espera a que el indicador de carga principal de SAP desaparezca.
+        Esto indica que la página ha terminado de cargar y está interactiva.
+        """
+        log.info("Esperando a que la página esté completamente cargada y sin bloqueos...")
+        try:
+            # Esperamos a que el bloqueador aparezca primero (puede ser instantáneo)
+            self.loading_indicator.wait_for(state='visible', timeout=2000)
+            log.debug("Indicador de carga detectado, esperando a que desaparezca.")
+        except Exception:
+            # Si no aparece en 2s, asumimos que la página ya estaba lista.
+            log.debug("No se detectó indicador de carga, la página parece estar lista.")
+            return
+
+        # Ahora esperamos a que desaparezca
+        self.loading_indicator.wait_for(state='hidden', timeout=timeout)
+        log.info("Indicador de carga ha desaparecido. La página está lista.")

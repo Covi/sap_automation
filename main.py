@@ -46,7 +46,6 @@ def main() -> None:
     # ======================================================================
 
     # Elegimos la estrategia de cierre basada en la configuración
-    # Esto resuelve tu FIXME y hace la intención explícita.
     closing_strategy: ClosingStrategy
     if run_config.persistent_session: # Asumiendo que tu run_config tiene este flag
         closing_strategy = PersistentClosingStrategy()
@@ -67,7 +66,7 @@ def main() -> None:
     # PASO 2: EJECUCIÓN DE LA LÓGICA
     # ======================================================================
     try:
-        page = manager.start_browser_with_session( # Usamos el método correcto
+        page = manager.start_browser_with_session(
             storage_state_path=STATE_FILE if os.path.exists(STATE_FILE) else None
         )
         page.goto(BASE_URL)

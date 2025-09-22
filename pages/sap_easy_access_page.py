@@ -1,8 +1,12 @@
 # Fichero: pages/sap_easy_access_page.py
 # Descripción: Page Object para la pantalla SAP Easy Access.
 
+import logging
 from pages.sap_page_base import SAPPageBase
 from core.providers.locators.base_locator_provider import BaseLocatorProvider
+
+# Configuración del Logger
+log = logging.getLogger(__name__)
 
 class SAPEasyAccessPage(SAPPageBase):
     """
@@ -19,12 +23,12 @@ class SAPEasyAccessPage(SAPPageBase):
         Comprueba si la sesión está activa buscando un elemento único
         de esta página (como el campo de transacción).
         """
-        # Asegúrate de que self.transaction_input es un locator que ya tienes definido
-        # en el __init__ de esta clase.
         try:
             self.transaction_input.wait_for(timeout=3000)
+            log.debug("Campo de transacción encontrado: sesión activa.")
             return True
-        except Exception:
+        except Exception as e:
+            log.warning(f"Campo de transacción NO encontrado: sesión inactiva? Detalle: {e}")
             return False
 
     def enter_transaction(self, transaction_code: str):

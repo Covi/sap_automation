@@ -20,7 +20,7 @@ class RunConfig:
     headless: bool
     log_level: Optional[str]
     download_dir: Optional[str]
-    persistent_session: bool = False  # <--- AÑADE ESTA LÍNEA
+    persistent_session: bool = False
 
 class CliHandler:
     def __init__(self):
