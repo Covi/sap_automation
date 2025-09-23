@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from playwright.sync_api import expect, Page, Locator, TimeoutError as PlaywrightTimeoutError
 from config import BASE_URL
 
@@ -22,7 +21,6 @@ class PageBase:
         return self.page
 
     # --- Métodos Genéricos de Interacción ---
-    # --- Métodos Genéricos de Navegación y Debugging ---
 
     def navigate(self, path: str = ""):
         """Navega a la URL base más la ruta específica."""
