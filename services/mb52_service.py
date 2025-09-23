@@ -54,8 +54,6 @@ class MB52Service:
         # 2. Ejecutar la acción principal (ya no espera resultados por sí misma)
         self._page.ejecutar()
 
-        self._page.pause()
-
         # Si necesitas pulsar "Continuar":
         self._page.gestionar_dialogo_emergente("Continuar")
 
@@ -65,8 +63,6 @@ class MB52Service:
         if error_msg:
             # Esta sección solo se ejecuta si el mensaje era realmente un error.
             raise ValueError(f"SAP ha devuelto un error fatal: {error_msg}")
-
-        self._page.pause()
 
         # 5. SEGUNDO: Si no hubo error, ESPERAR y verificar la señal de éxito
         try:
