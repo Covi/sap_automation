@@ -17,4 +17,4 @@ class TransactionService:
         self._easy_access_page.enter_transaction(transaction_code)
         self._easy_access_page.execute_transaction()
 
-        self._easy_access_page.page.locator('form[ct="FOR"]')
+        self._easy_access_page.page.locator('form[ct="FOR"]') # FIXME hardcodeado
