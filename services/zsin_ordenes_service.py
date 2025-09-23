@@ -1,3 +1,5 @@
+# services/zsin_ordenes_service.py
+
 import logging
 from pathlib import Path
 from typing import Optional, Protocol
@@ -52,22 +54,27 @@ class ZsinOrdenesService:
         try:
             self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
 
-            # TODO FIXME DEBUG self._page.pause()
-
             # Modelo
             payload = SapPayloadBuilder.build_payload(criteria)
 
-            # FIXME esto falla self._page.esperar_formulario()
             self._page.rellenar_formulario(payload)
-            # TODO FIXME DEBUG self._page.pause()
             self._page.ejecutar()
             total = self._page.obtener_resultados()
-            # TODO FIXME DEBUG self._page.pause()
 
             if total < 1:
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
                 return
             log.info(f"✅ Se encontraron {total} resultados.")
+
+            log.debug(f"[SERVICE] options.wait_after_results = {options.wait_after_results}")
+            # Espera manual tras resultados si está configurada
+            if getattr(options, "wait_after_results", False):
+                log.info("Pausa manual tras obtener resultados (solo modo UI).")
+                self._page.pause()
+
+            self._page.pause()
+            self._page.seleccionar_todas_las_ordenes()
+            self._page.pause()
 
             # --- OPTIONS ---
             if options.reenviar:
