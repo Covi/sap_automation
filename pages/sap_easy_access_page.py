@@ -16,8 +16,10 @@ class SAPEasyAccessPage(SAPPageBase):
     def __init__(self, page, locator_provider: BaseLocatorProvider):
         super().__init__(page, locator_provider)
 
-        # El único locator que esta página necesita
+        # Locators específicos de la pantalla SAP Easy Access
         self.transaction_input = self.page.locator(locator_provider.get('transaction_input'))
+        self.ejecutar_button = self.page.locator(locator_provider.get('common.ejecutar'))
+        self.continuar_button = self.page.locator(locator_provider.get('common.continuar'))
 
     def is_logged_in(self) -> bool:
         """
@@ -43,4 +45,19 @@ class SAPEasyAccessPage(SAPPageBase):
         Lanza la transacción simulando la pulsación de la tecla 'Enter'
         en el campo de la transacción.
         """
-        self.transaction_input.press("Enter")
+        # FIXME esto es muy muy falible, si la ventana pierde foco, falla
+        try:
+            self.transaction_input.press("Enter")
+            log.debug(f"Código de transacción ejecutado con ENTER.")
+        except Exception as e:
+            log.warning(f"Error al ejecutar la transacción pulsando ENTER, fallback con ejecutar: {e}")
+            try:
+                self.ejecutar_button.click()
+            except Exception as e:
+                log.warning(f"Error al ejecutar la transacción con el botón Ejecutar: {e} Último recurso, se continúa.")
+                try:
+                    self.continuar_button.click()  # En caso de que haya un botón "Continuar"
+                except Exception as e:
+                    log.error("No se ha podido ejecutar la transacción ni con ENTER, ni con Ejecutar, ni con Continuar." \
+                    " Detalle: {e}")
+                    raise
