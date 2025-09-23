@@ -45,7 +45,6 @@ class SAPEasyAccessPage(SAPPageBase):
         Lanza la transacción simulando la pulsación de la tecla 'Enter'
         en el campo de la transacción.
         """
-        # FIXME esto es muy muy falible, si la ventana pierde foco, falla
         try:
             self.transaction_input.press("Enter")
             log.debug(f"Código de transacción ejecutado con ENTER.")
