@@ -1,23 +1,25 @@
 # locators/common.toml
 
 [common]
-# Botones principales
-ejecutar		= "role=button[name*='Ejecutar']"
-ejecutar_title  = "role=button[title*='Ejecutar']"
-continuar		= "role=button[name='Continuar']" # Asumido en base a tu otro botón
-ok      		= "role=button[name='OK']"
+# Inputs principales
+trx_code_input		= 'role=combobox[name="Indicar código de transacción"]'
+ToolbarOkCode		= "#ToolbarOkCode" # Input de código de transacción en la barra de comandos
 
-trx_code_input	= 'role=combobox[name="Indicar código de transacción"]'
+# Botones principales
+ejecutar			= "role=button[name*='Ejecutar']"
+ejecutar_title  	= "role=button[title*='Ejecutar']"
+continuar			= "role=button[name='Continuar']" # Asumido en base a tu otro botón
+ok      			= "role=button[name='OK']"
 
 # Formularios principales
-form_principal	= "form[name='webguiform0']"
+form_principal		= "form[name='webguiform0']"
 
 
 # Botones de la barra de herramientas (toolbar)
 
 
 # El ID de la barra de estado suele ser este:
-status_bar		= "role=status" # Esto es mucho más fiable que un ID
+status_bar			= "role=status" # Esto es mucho más fiable que un ID
 
 
 
@@ -33,13 +35,13 @@ cargando 			= "*[id='ur-loading-box']"
 
 # Locators para el componente export_dialog
 [export_dialog]
-filename_input = "role=textbox[name='Nom.arch. :']"
-exportar_a_button = "role=button[name='Exportar a...']"
+filename_input 		= "role=textbox[name='Nom.arch. :']"
+exportar_a_button 	= "role=button[name='Exportar a...']"
 
 # Locators para el componente menu_export_dialog
 [menu_export_dialog]
-titulo = "role=heading[name='Grabar lista fichero...']"
+titulo 				= "role=heading[name='Grabar lista fichero...']"
 opcion_exportar_csv = "role=radio[name='Texto con tabuladores']"
-selector_formato = "role=combobox[name='Formato']" # selector de formato de exportación XXX No se usa
-nombre_archivo = "role=textbox[name='Guardar como :']"
+selector_formato 	= "role=combobox[name='Formato']" # selector de formato de exportación XXX No se usa
+nombre_archivo 		= "role=textbox[name='Guardar como :']"
 opcion_guardar_hoja_calculo = "role=option[name='Archivos de hoja de cálculo (*.xlsx)']"

@@ -1,6 +1,6 @@
 # core/providers/locators/toml_locator_provider.py
 
-import toml
+import toml, warnings
 from pathlib import Path
 from typing import Dict, Any, List
 from .base_locator_provider import BaseLocatorProvider
@@ -24,6 +24,12 @@ class TomlLocatorProvider(BaseLocatorProvider):
         Ejemplo: get('form.material') -> str
                  get('form.status')  -> List[str]
         """
+        warnings.warn(
+            "El uso de LocatorProvider para obtener selectores como strings está obsoleto (deprecated). "
+            "Define los locators directamente en la clase Page Object usando los métodos get_by...() de Playwright.",
+            DeprecationWarning,
+            stacklevel=2 # Apunta a quien llamó a esta función, no a esta línea.
+        )
         keys = locator_key.split('.')
         value = self._locators
         try:

@@ -21,6 +21,7 @@ class PageBase:
         """Propiedad que expone de forma segura el objeto Page de Playwright."""
         return self.page
 
+    # --- Métodos Genéricos de Interacción ---
     # --- Métodos Genéricos de Navegación y Debugging ---
 
     def navigate(self, path: str = ""):

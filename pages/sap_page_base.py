@@ -1,7 +1,7 @@
 # pages/sap_page_base.py
 
 import logging
-from .page_base import PageBase, Locator, PlaywrightTimeoutError
+from .page_base import expect, PageBase, Locator, PlaywrightTimeoutError
 from core.providers.locators.base_locator_provider import BaseLocatorProvider
 
 log = logging.getLogger(__name__)
@@ -28,10 +28,23 @@ class SAPPageBase(PageBase):
 
         # Formulario principal de prácticamente todas las pantallas SAP
         self.form = self.playwright_page.locator(self._provider.get('common.form_principal'))
-        # ==========================================================
+
+        # Barra de comandos (command bar) donde se introduce el código de transacción
+        self.command_bar = self.playwright_page.get_by_role("combobox", name="Indicar código de transacción")
 
 
-    # --- Métodos de Acción Específicos de SAP ---
+    # --- MÉTODO MOVIDO AQUÍ ---
+    def wait_for_command_bar(self, timeout: int = 5000):
+        """
+        Espera de forma robusta a que la barra de comandos esté visible y habilitada.
+        """
+        log.debug("Esperando a que la barra de comandos esté lista...")
+        
+        # Usamos 'expect' que espera automáticamente a que la condición se cumpla.
+        expect(self.command_bar).to_be_visible(timeout=timeout)
+        expect(self.command_bar).to_be_editable(timeout=timeout)
+        
+        log.debug("Barra de comandos lista.")
     
     def get_status_bar_text(self) -> str:
         """Espera y devuelve el texto de la barra de estado de SAP."""

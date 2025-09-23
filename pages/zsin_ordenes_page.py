@@ -48,7 +48,8 @@ class ZsinOrdenesPage(SAPReportPage):
 
     # --- Implementación de los métodos abstractos obligatorios ---
 
-    def _esperar_resultados(self, timeout: int = 30000) -> None:
+    # FIXME: ¿Se está usando?
+    def esperar_resultados(self, timeout: int = 30000) -> None:
         """Implementa la lógica de espera específica de ZSIN_ORDENES."""
         log.debug(f"Esperando hasta {timeout / 1000} segundos a que aparezca la tabla de resultados...")
         self.wait_for_page_to_be_ready(timeout=timeout)

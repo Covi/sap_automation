@@ -1,3 +1,6 @@
+# pages/sap_report_page.py
+# TODO Podría haber un SAPReportService
+
 import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Any
@@ -41,7 +44,7 @@ class SAPReportPage(SAPPageBase, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _esperar_resultados(self, timeout: int = 30000):
+    def esperar_resultados(self, timeout: int = 30000):
         """
         Método abstracto. Cada página hija DEBE implementar su propia
         lógica de espera para los resultados tras una ejecución.
@@ -66,10 +69,9 @@ class SAPReportPage(SAPPageBase, ABC):
 
     def ejecutar(self):
         """
-        Método común para ejecutar el informe y esperar los resultados.
-        Llama al método 'execute' de la clase base y luego a la lógica
-        de espera específica de la clase hija.
+        Método común para ejecutar el informe.
+        Simplemente ejecuta la acción principal (ej. clic en el botón 'Ejecutar').
+        La espera y validación de resultados se orquesta desde el servicio.
         """
         log.info(f"Ejecutando reporte en la página {self.__class__.__name__}")
-        self.execute()
-        self._esperar_resultados()
+        self.execute() # Asumiendo que 'execute' hace el clic en el botón de ejecutar

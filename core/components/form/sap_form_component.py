@@ -26,7 +26,15 @@ class SAPFormComponent(SAPComponent):
             strategy: La estrategia de rellenado a utilizar.
         """
         log.info(f"Rellenando formulario con la estrategia: {strategy.__class__.__name__}")
+        log.info("Asegurando estado limpio y rellenando formulario...")
 
+        # --- PASO 1: Bucle de Limpieza Total ---
+        # Itera sobre TODOS los campos que el Page Object conoce y los limpia.
+        for field_name, locator in form_map.items():
+            locator.clear()
+            log.debug(f"Campo '{field_name}' limpiado.")
+
+        # --- PASO 2: Bucle de Rellenado Inteligente ---
         # Itera directamente sobre el diccionario, filtrando valores nulos.
         for field, value in payload.items():
             if value is not None and field in form_map:
