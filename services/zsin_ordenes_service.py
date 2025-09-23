@@ -72,10 +72,6 @@ class ZsinOrdenesService:
                 log.info("Pausa manual tras obtener resultados (solo modo UI).")
                 self._page.pause()
 
-            self._page.pause()
-            self._page.seleccionar_todas_las_ordenes()
-            self._page.pause()
-
             # --- OPTIONS ---
             if options.reenviar:
                 log.info("Acción: Reenviar órdenes.")
@@ -90,6 +86,8 @@ class ZsinOrdenesService:
                 log.info("Acción: Imprimir órdenes.")
                 self._page.seleccionar_todas_las_ordenes()
 
+                # FIXME Estos ajustes están viniendo del builder, para empezar no los estamos comprobando
+                # y habría que ver si esto se tendría que agnostizar, al igual que lo siguiente, lo veo demasiado verboso
                 filename = options.output_filename
                 path = options.output_path
 

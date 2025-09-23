@@ -66,6 +66,7 @@ class GenericTransactionBuilder(BuilderProtocol):
 
         try:
             # Construye el schema de criterios, aplicando valores por defecto del config
+            # FIXME Tampoco entiendo esto de centro
             default_data = {"centro": getattr(config, 'DEFAULT_CENTRO', None)}
             final_criteria_data = {k: v for k, v in default_data.items() if v is not None} | params
             criteria = criteria_schema(**final_criteria_data)
