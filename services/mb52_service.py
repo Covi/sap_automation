@@ -51,24 +51,22 @@ class MB52Service:
         payload = self.payload.build_payload(form_data)
         self._page.rellenar_formulario(payload)
 
-        # FIXME Aquí deberíamos gestionar los posibles errores de validación del formulario
-        # El contenedor creo que es msgPanel
-        # <div tabindex="0" ti="0" title="No existe ninguna entrada correspondiente a la entrada en el campo Material" class="lsMessageBar lsMessageBar--nowrapping lsMessageBar--width-default lsMessageBar--ruleBottom lsMessageBar--transparent" id="wnd[0]/sbar_msg" ct="MB" lsdata="{&quot;0&quot;:&quot;No existe ninguna entrada correspondiente a la entrada en el campo Material&quot;,&quot;1&quot;:&quot;WARNING&quot;,&quot;5&quot;:&quot;No existe ninguna entrada correspondiente a la entrada en el campo Material&quot;,&quot;6&quot;:true,&quot;7&quot;:&quot;Visualizar detalles&quot;,&quot;11&quot;:{&quot;SID&quot;:&quot;wnd[0]/sbar_msg&quot;,&quot;Type&quot;:&quot;MESSAGEBAR&quot;,&quot;visibility&quot;:0,&quot;messageType&quot;:&quot;Advertencia&quot;,&quot;applicationText&quot;:&quot;No existe ninguna entrada correspondiente a la entrada en el campo Material&quot;},&quot;12&quot;:false,&quot;13&quot;:true}" lsevents="{&quot;ActivateHelp&quot;:[{},{&quot;1&quot;:&quot;action/1/wnd[0]/sbar&quot;,&quot;2&quot;:true}]}" aria-labelledby="wnd[0]/sbar_msg-arialabel" role="note" aria-roledescription="Barra de información" aria-live="assertive" data-toolbaritem-id="wnd[0]/sbar_msg" data-ls-firstitem="true" data-separator-group="0" data-after-priority="0"><span class="lsControl--invisible " id="wnd[0]/sbar_msg-arialabel">Advertencia Barra de mensajes No existe ninguna entrada correspondiente a la entrada en el campo Material</span><span id="wnd[0]/sbar_msg-icon" class="lsMessageBar__icon lsMessageBar__image lsMessageBar__icon--Warning lsMessageBar__image--Warning" role="img" aria-hidden="true"></span><span role="presentation" aria-hidden="true" id="wnd[0]/sbar_msg-txt" class="lsMessageBar__text lsMessageBar__text--overflow" title="No existe ninguna entrada correspondiente a la entrada en el campo Material">No existe ninguna entrada correspondiente a la entrada en el campo Material</span><span class="lsMessageBar__link lsMessageBar__link--noUserSelect" id="wnd[0]/sbar_msg-help" tabindex="0" ti="0" role="link">Visualizar detalles</span></div>
-
-
         # 2. Ejecutar la acción principal (ya no espera resultados por sí misma)
         self._page.ejecutar()
 
-        # --- AHORA, EL SERVICIO ORQUESTA LA VALIDACIÓN ---
-        
-        # 3. Gestionar posibles pop-ups intermedios que bloqueen el flujo
-        self._page.gestionar_posible_popup_continuar()
+        self._page.pause()
 
-        # 4. PRIMERO: Buscar activamente una señal de error conocida (la barra de estado)
-        error_msg = self._page.obtener_error_de_status_bar()
+        # Si necesitas pulsar "Continuar":
+        self._page.gestionar_dialogo_emergente("Continuar")
+
+        # Ahora la lógica es explícita: buscamos un mensaje de tipo "Error".
+        error_msg = self._page.check_status_bar_for_message_type("Error")
+
         if error_msg:
-            # Si encontramos un error, fallamos inmediatamente con un mensaje claro
-            raise ValueError(f"SAP ha devuelto un error de validación: {error_msg}")
+            # Esta sección solo se ejecuta si el mensaje era realmente un error.
+            raise ValueError(f"SAP ha devuelto un error fatal: {error_msg}")
+
+        self._page.pause()
 
         # 5. SEGUNDO: Si no hubo error, ESPERAR y verificar la señal de éxito
         try:

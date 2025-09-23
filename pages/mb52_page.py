@@ -28,9 +28,6 @@ class MB52Page(SAPReportPage):
         
         # Locator para el botón 'Continuar' que puede aparecer en pop-ups
         self.continuar_button = self.playwright_page.locator(self._provider.get('common.continuar'))
-        
-        # Locator específico y robusto para la barra de estado de SAP
-        self.error_bar_selector = self.playwright_page.locator("#wnd\\[0\\]\\/sbar_msg")
 
         # Componente para gestionar el diálogo de exportación
         self.export_dialog = SAPExportDialog(self)
@@ -82,39 +79,3 @@ class MB52Page(SAPReportPage):
         except (TimeoutError, Error) as e:
             log.error(f"El proceso de descarga para MB52 ha fallado: {e}")
             raise
-
-    def gestionar_posible_popup_continuar(self):
-        """
-        Método guardián. Busca un pop-up de 'Continuar' y hace clic si existe.
-        No falla si no lo encuentra, permitiendo un flujo robusto.
-        """
-        try:
-            # Intentamos hacer clic con un timeout muy bajo para no bloquear el script.
-            self.continuar_button.click(timeout=1500)
-            log.info("Pop-up 'Continuar' detectado y gestionado.")
-        except TimeoutError:
-            # Esto es lo esperado si el pop-up no aparece. No es un error.
-            log.debug("No se encontró pop-up de 'Continuar', se sigue el flujo normal.")
-            pass # Silenciamos el error de timeout y continuamos
-
-    def obtener_error_de_status_bar(self) -> Optional[str]:
-        """
-        Busca un mensaje de validación en la barra de estado de SAP.
-        Devuelve el texto del error o None si no se encuentra ninguno.
-        """
-        try:
-            # Esperamos un momento corto por si el mensaje tarda en aparecer
-            error_element = self.error_bar_selector
-            error_element.wait_for(state="visible", timeout=2500)
-
-            # El texto completo del error suele estar en el atributo 'title'
-            error_text = error_element.get_attribute("title")
-            if error_text:
-                log.warning(f"Detectado error de SAP en la status bar: '{error_text}'")
-                return error_text
-            
-            return "Se detectó un error en la barra de estado, pero no se pudo extraer el texto."
-
-        except TimeoutError:
-            log.debug("No se encontraron mensajes de error en la status bar.")
-            return None
