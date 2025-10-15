@@ -1,3 +1,5 @@
+# schemas/zsin_ordenes.py
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, Tuple
 from datetime import date
@@ -51,3 +53,4 @@ class ZsinOrdenesExecutionOptions(BaseModel):
 
     output_path: Path
     output_filename: str
+    wait_after_results: bool = False

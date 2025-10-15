@@ -60,3 +60,12 @@ class SAPEasyAccessPage(SAPPageBase):
                     log.error("No se ha podido ejecutar la transacción ni con ENTER, ni con Ejecutar, ni con Continuar." \
                     " Detalle: {e}")
                     raise
+
+    def wait_for_transaction_form(self, timeout: int = 10000):
+        """
+        Espera de forma robusta a que el contenedor principal del formulario de
+        una transacción esté cargado y visible.
+        """
+        # Usamos el locator que ya habías identificado
+        form_container = self.page.locator('form[ct="FOR"]') # FIXME hardcodeado
+        form_container.wait_for(state="visible", timeout=timeout)

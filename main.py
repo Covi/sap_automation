@@ -88,6 +88,10 @@ def main() -> None:
         else:
             log.info("Sesión recuperada con éxito desde el fichero de estado.")
 
+        # FIXME Temporal
+        log.debug(f"[MAIN] run_config.wait_after_results = {run_config.wait_after_results}")
+        log.debug(f"[MAIN] run_config.params = {run_config.params}")
+
         # --- Transacción ---
         builder = GenericTransactionBuilder(run_config.transaction_name)
         transaction_service = builder.build_service(page)

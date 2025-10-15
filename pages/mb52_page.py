@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from playwright.sync_api import Download, TimeoutError, Error
 
@@ -17,12 +17,19 @@ class MB52Page(SAPReportPage):
     Hereda la lógica común de informes de SAPReportPage.
     """
     def __init__(self, page, locator_provider: Any):
+        """
+        Inicializa la página, sus componentes y los locators específicos.
+        """
         super().__init__(page, locator_provider)
 
         # --- Definición de componentes y locators específicos de MB52 ---
         self.results_table = self.playwright_page.locator(self._provider.get('results.tabla_resultados'))
-        self.confirm_button = self.playwright_page.locator(self._provider.get('common.continuar'))
         self.download_button = self.playwright_page.locator(self._provider.get('buttons.descargar_hoja'))
+        
+        # Locator para el botón 'Continuar' que puede aparecer en pop-ups
+        self.continuar_button = self.playwright_page.locator(self._provider.get('common.continuar'))
+
+        # Componente para gestionar el diálogo de exportación
         self.export_dialog = SAPExportDialog(self)
 
     # --- Implementación de las propiedades abstractas obligatorias ---
@@ -43,15 +50,22 @@ class MB52Page(SAPReportPage):
 
     # --- Implementación de los métodos abstractos obligatorios ---
 
-    def _esperar_resultados(self, timeout: int = 30000):
-        """Implementa la lógica de espera específica de MB52."""
-        self.confirm_button.wait_for(timeout=timeout)
-        self.confirm_button.click()
-        self.results_table.wait_for(timeout=timeout)
+    def esperar_resultados(self, timeout: int = 30000):
+        """
+        Implementa la lógica de espera específica de MB52.
+        La responsabilidad de este método es pausar la ejecución hasta que la
+        tabla de resultados esté visible, o fallar si se excede el timeout.
+        """
+        self.results_table.wait_for(state="visible", timeout=timeout)
 
     def is_results_table_visible(self) -> bool:
-        """Comprueba si la tabla de resultados del informe está visible."""
+        """
+        Comprueba de forma instantánea si la tabla de resultados del informe está visible.
+        Devuelve True o False sin esperar.
+        """
         return self.results_table.is_visible()
+
+    # --- Métodos específicos de la página ---
 
     def descargar_hoja_calculo(self, fichero_de_salida_nombre: str) -> Download:
         """

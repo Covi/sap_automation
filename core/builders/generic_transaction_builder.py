@@ -1,3 +1,5 @@
+# core/builders/generic_transaction_builder.py
+
 import logging
 from typing import Dict, Any
 from pathlib import Path
@@ -64,6 +66,7 @@ class GenericTransactionBuilder(BuilderProtocol):
 
         try:
             # Construye el schema de criterios, aplicando valores por defecto del config
+            # FIXME Tampoco entiendo esto de centro
             default_data = {"centro": getattr(config, 'DEFAULT_CENTRO', None)}
             final_criteria_data = {k: v for k, v in default_data.items() if v is not None} | params
             criteria = criteria_schema(**final_criteria_data)
@@ -77,12 +80,21 @@ class GenericTransactionBuilder(BuilderProtocol):
         # --- LÓGICA CONDICIONAL ---
         # Decide cómo llamar al servicio basándose en si la receta define un schema de opciones.
         if options_schema:
-            # CASO NUEVO (ej: zsin_ordenes): El servicio espera 'criteria' y 'options'.
+            # El servicio espera 'criteria' y 'options'.
             try:
                 # Prepara los datos para el schema de opciones, obteniendo valores del config y de la CLI.
                 options_data = params.copy()
+
+                # FIXME No todas las trx necesitan ni downloads_dir ni filename.
+                # Aunque el próximo feature es añadir la descarga del excel de resultados, 
+                # así que no está de más aunque igual esto debería manejarse de forma más elegante en el futuro.
+                # Además hardcodeamos el path de descarga y el nombre del fichero de exportación
+                # a partir de la configuración global, ya que no tiene sentido que el usuario
+                # tenga que especificarlo en la CLI cada vez.
+
                 options_data['output_path'] = Path(config.DOWNLOAD_DIR)
                 options_data['output_filename'] = params.get("output") or config.EXPORT_FILENAME
+
                 options = options_schema(**options_data)
                 
             except ValidationError as e:
@@ -90,9 +102,10 @@ class GenericTransactionBuilder(BuilderProtocol):
                 raise ValueError("Parámetros de entrada para opciones inválidos.") from e
             
             service.run(criteria=criteria, options=options)
-        
+
         else:
-            # CASO ANTIGUO (ej: mb52): El servicio espera 'form_data', 'path' y 'filename'.
+            # FIXME No todas las trx necesitan ni downloads_dir ni filename.
+
             downloads_dir = Path(config.DOWNLOAD_DIR)
             downloads_dir.mkdir(parents=True, exist_ok=True)
             filename = params.get("output") or config.EXPORT_FILENAME

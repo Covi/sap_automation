@@ -46,8 +46,8 @@ class ZsinOrdenesPage(SAPReportPage):
         """Provee la estrategia de rellenado para la clase base."""
         return RangeFillStrategy()
 
-
     # --- Implementación de los métodos abstractos obligatorios ---
+
     def esperar_resultados(self, timeout: int = 30000) -> None:
         """
         ⚠️ CAMBIO: Antes era _esperar_resultados privado. Ahora es público.

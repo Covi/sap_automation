@@ -1,3 +1,5 @@
+# services/zsin_ordenes_service.py
+
 import logging
 from pathlib import Path
 from typing import Optional, Protocol
@@ -52,28 +54,27 @@ class ZsinOrdenesService:
         try:
             self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
 
-            # TODO FIXME DEBUG self._page.pause()
-
-            # Formulario
-            self._page.esperar_formulario()
-            # Payload para el formulario
+            # Modelo
             payload = SapPayloadBuilder.build_payload(criteria)
-            log.debug(f"Payload construido para el formulario: {payload}")
+            # Recuperar la espera del formulario antes de rellenarlo
+            self._page.esperar_formulario() # <--- ¡AÑADE ESTA LÍNEA!
             self._page.rellenar_formulario(payload)
-
-            # ⚠️ CAMBIO: ejecutar botón y esperar resultados separados
             self._page.ejecutar()
             self._page.esperar_resultados(60000)
 
             # Resultados
             total = self._page.obtener_resultados()
 
-            # self._page.pause()  # FIXME DEBUG
-
             if total < 1:
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
                 return
             log.info(f"✅ Se encontraron {total} resultados.")
+
+            log.debug(f"[SERVICE] options.wait_after_results = {options.wait_after_results}")
+            # Espera manual tras resultados si está configurada
+            if getattr(options, "wait_after_results", False):
+                log.info("Pausa manual tras obtener resultados (solo modo UI).")
+                self._page.pause()
 
             # --- OPTIONS ---
             if options.reenviar:
@@ -91,6 +92,8 @@ class ZsinOrdenesService:
                 log.info("Acción: Imprimir órdenes.")
                 self._page.seleccionar_todas_las_ordenes()
 
+                # FIXME Estos ajustes están viniendo del builder, para empezar no los estamos comprobando
+                # y habría que ver si esto se tendría que agnostizar, al igual que lo siguiente, lo veo demasiado verboso
                 filename = options.output_filename
                 path = options.output_path
 

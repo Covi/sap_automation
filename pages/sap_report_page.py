@@ -1,4 +1,5 @@
 # pages/sap_report_page.py
+# TODO Podría haber un SAPReportService
 
 import logging
 from abc import ABC, abstractmethod
@@ -73,15 +74,9 @@ class SAPReportPage(SAPPageBase, ABC):
     # --- Método opcional legacy / alias ---
     def ejecutar(self):
         """
-        Alias de 'execute()' para compatibilidad semántica.
-        Solo dispara el botón ejecutar de SAP, no espera resultados.
+        Método común para ejecutar el informe.
+        Simplemente ejecuta la acción principal (ej. clic en el botón 'Ejecutar').
+        La espera y validación de resultados se orquesta desde el servicio.
         """
-        log.info(f"Disparando reporte en la página {self.__class__.__name__} (alias de execute)")
-        self.execute()
-
-    # --- Legacy: esperar formulario antiguo, puede borrarse tras migración ---
-    def esperar_formulario_legacy(self, timeout: int = 30000):
-        """Esperar al formulario y a los campos específicos (legacy)."""
-        self.wait_for_form(timeout=timeout)
-        for locator in self.form_locators.values():
-            self.page.wait_for_selector(locator[0], timeout=timeout)
+        log.info(f"Ejecutando reporte en la página {self.__class__.__name__}")
+        self.execute() # Asumiendo que 'execute' hace el clic en el botón de ejecutar

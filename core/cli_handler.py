@@ -21,8 +21,10 @@ class RunConfig:
     log_level: Optional[str]
     download_dir: Optional[str]
     persistent_session: bool = False
+    wait_after_results: bool = False
 
 class CliHandler:
+    """Maneja la línea de comandos, parsea argumentos y resuelve la configuración de ejecución."""
     def __init__(self):
         self.available_trxs = list(TRANSACTION_REGISTRY.keys())
         self.parser = self._create_parser()
@@ -42,7 +44,6 @@ class CliHandler:
         )
         parser.add_argument("-l", "--list", action='store_true', help="Lista las transacciones disponibles y sale.")
         parser.add_argument('-b', '--browser', type=str, choices=['firefox', 'chromium', 'webkit'], default=DEFAULT_BROWSER, help=f"Navegador a usar (defecto: {DEFAULT_BROWSER}).")
-        parser.add_argument('-hd', '--headless', action='store_true', help="Ejecuta el navegador en modo headless (sin UI).")
         parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="Establece el nivel de log.")
         parser.add_argument('-y', '--yes', action='store_true', help="Asume 'sí' en todas las preguntas de confirmación.")
         parser.add_argument('-u', '--unattended', action='store_true', help="Modo desatendido para servicios. Exige nombres exactos.")
@@ -50,8 +51,21 @@ class CliHandler:
         parser.add_argument(
             "-p",
             "--persistent",
-            action="store_true",  # <--- Esto hace que si el flag está, el valor sea True
+            action="store_true",
             help="Activa la estrategia de persistencia para mantener el navegador abierto."
+        )
+
+        # --- Grupo autoexcluyente para headless y pausa manual ---
+        excl_group = parser.add_mutually_exclusive_group()
+        excl_group.add_argument(
+            '-hd', '--headless',
+            action='store_true',
+            help="Ejecuta el navegador en modo headless (sin UI)."
+        )
+        excl_group.add_argument(
+            '-w', '--wait-after-results',
+            action='store_true',
+            help="Pausa manual tras obtener resultados (solo modo UI)."
         )
 
         return parser
@@ -64,6 +78,7 @@ class CliHandler:
         return params
 
     def list_transactions(self):
+        """Lista las transacciones disponibles."""
         print("\nTransacciones disponibles:"); [print(f"  - {trx}") for trx in self.available_trxs]; print()
 
     def show_transaction_info(self, trx_name: str):
@@ -149,6 +164,10 @@ class CliHandler:
         """Parsea argumentos y devuelve la configuración de ejecución o None."""
         args = self.parser.parse_args()
 
+        # --- FIXME DEBUG TEMPORAL ---
+        log.debug(f"Valor recibido para wait_after_results: {args.wait_after_results}")
+        print(f"[DEBUG] args.wait_after_results = {args.wait_after_results}")
+
         if args.list:
             self.list_transactions()
             return None
@@ -179,5 +198,6 @@ class CliHandler:
             headless=args.headless,
             log_level=args.log_level, 
             download_dir=args.download_dir, 
-            persistent_session=args.persistent
+            persistent_session=args.persistent,
+            wait_after_results=args.wait_after_results
         )
