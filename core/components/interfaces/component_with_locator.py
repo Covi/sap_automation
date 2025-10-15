@@ -6,5 +6,5 @@ class ComponentWithLocator(ABC):
 
     @property
     @abstractmethod
-    def table_locator(self) -> Locator:
+    def component_locator(self) -> Locator:
         pass

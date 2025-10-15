@@ -54,15 +54,21 @@ class ZsinOrdenesService:
 
             # TODO FIXME DEBUG self._page.pause()
 
-            # Modelo
+            # Formulario
+            self._page.esperar_formulario()
+            # Payload para el formulario
             payload = SapPayloadBuilder.build_payload(criteria)
-
-            # FIXME esto falla self._page.esperar_formulario()
+            log.debug(f"Payload construido para el formulario: {payload}")
             self._page.rellenar_formulario(payload)
-            # TODO FIXME DEBUG self._page.pause()
+
+            # ⚠️ CAMBIO: ejecutar botón y esperar resultados separados
             self._page.ejecutar()
+            self._page.esperar_resultados(60000)
+
+            # Resultados
             total = self._page.obtener_resultados()
-            # TODO FIXME DEBUG self._page.pause()
+
+            # self._page.pause()  # FIXME DEBUG
 
             if total < 1:
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
@@ -74,6 +80,8 @@ class ZsinOrdenesService:
                 log.info("Acción: Reenviar órdenes.")
                 self._page.seleccionar_todas_las_ordenes()
                 self._page.reenviar_ordenes()
+
+            #self._page.pause()  # FIXME DEBUG
 
             if options.imprimir:
                 if not (self._file_handler and self._print_service):

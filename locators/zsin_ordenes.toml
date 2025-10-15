@@ -21,6 +21,7 @@ fechaicreacion = ['//*[@id="M0:46:::27:34"]', '//*[@id="M0:46:::27:59"]']
 [results]
 # Se reemplazan IDs, que pueden ser dinámicos, por locators de rol robusto.
 tabla = "role=grid"
+tabla_cts = "[ct='STCS']"
 seleccionar_todas = "role=columnheader[name='Columna de selección de filas']"
 
 # --- Locators para la barra de herramientas de la tabla de resultados ---

@@ -1,3 +1,5 @@
+# pages/sap_report_page.py
+
 import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Any
@@ -12,64 +14,74 @@ class SAPReportPage(SAPPageBase, ABC):
     """
     Clase base abstracta para páginas SAP que siguen el patrón de un informe:
     1. Rellenar un formulario.
-    2. Ejecutar un reporte.
-    3. Esperar y procesar una tabla de resultados.
+    2. Disparar un reporte.
+    3. Esperar y procesar resultados (opcional según la página).
+
+    Nota: Separamos la acción de ejecutar del paso de esperar resultados para
+    respetar SRP y semántica.
     """
+
     def __init__(self, page, locator_provider: Any):
         super().__init__(page, locator_provider)
-        self.form = SAPFormComponent(self)
-        # La tabla de resultados es un concepto común, pero cada hijo 
-        # debe definir e inicializar su locator o componente específico.
+
+        # Componente para rellenar formularios
+        self.form_component = SAPFormComponent(self)
+
+        # La tabla de resultados es opcional; cada hija puede definirla
         self.results_table = None 
 
+    # --- Propiedades abstractas obligatorias que deben definir las hijas ---
     @property
     @abstractmethod
     def form_locators(self) -> Dict[str, Any]:
-        """
-        Propiedad abstracta. Cada página hija DEBE implementar esto.
-        Debe devolver el diccionario que mapea nombres de campo a locators de Playwright.
-        """
+        """Devuelve un diccionario de locators para los campos del formulario."""
         raise NotImplementedError
 
     @property
     @abstractmethod
     def fill_strategy(self) -> FormFillingStrategy:
-        """
-        Propiedad abstracta. Cada página hija DEBE devolver una instancia 
-        de su estrategia de rellenado de formulario.
-        """
+        """Devuelve la estrategia de rellenado del formulario."""
         raise NotImplementedError
 
+    # --- Método abstracto para esperar resultados, obligatorio solo para páginas de reporte ---
     @abstractmethod
-    def _esperar_resultados(self, timeout: int = 30000):
+    def esperar_resultados(self, timeout: int = 30000):
         """
-        Método abstracto. Cada página hija DEBE implementar su propia
-        lógica de espera para los resultados tras una ejecución.
+        Cada página hija que tenga resultados debe implementar su lógica de espera.
+        Esto queda público para ser llamado explícitamente por el flujo que lo necesite.
         """
         raise NotImplementedError
 
-    def esperar_formulario(self, timeout: int = 30000):
-        """Espera a que el formulario principal y los campos estén listos antes de rellenarlo."""
-        # Espera al formulario principal usando el método base
-        self.wait_for_form(timeout=timeout)
-        # Espera a los campos específicos si es necesario
-        for locator in self.form_locators.values():
-            self.page.wait_for_selector(locator[0], timeout=timeout)
+    # --- Métodos comunes de interacción ---
+    def esperar_formulario(self, timeout: int = 30000) -> None:
+        """
+        Espera a que el formulario principal y los campos estén listos antes de rellenarlo.
+        """
+        try:
+            self.form.wait_for(timeout=timeout)
+            log.info("Formulario principal visible.")
+        except Exception as e:
+            log.error(f"Error esperando el formulario principal: {e}")
+            raise
 
     def rellenar_formulario(self, payload: dict):
         """
-        Método común para rellenar el formulario.
-        Usa las propiedades 'form_locators' y 'fill_strategy' que la 
-        clase hija está obligada a definir.
+        Rellena el formulario usando el componente y la estrategia definida por la hija.
         """
-        self.form.fill_form(payload, self.form_locators, self.fill_strategy)
+        self.form_component.fill_form(payload, self.form_locators, self.fill_strategy)
 
+    # --- Método opcional legacy / alias ---
     def ejecutar(self):
         """
-        Método común para ejecutar el informe y esperar los resultados.
-        Llama al método 'execute' de la clase base y luego a la lógica
-        de espera específica de la clase hija.
+        Alias de 'execute()' para compatibilidad semántica.
+        Solo dispara el botón ejecutar de SAP, no espera resultados.
         """
-        log.info(f"Ejecutando reporte en la página {self.__class__.__name__}")
+        log.info(f"Disparando reporte en la página {self.__class__.__name__} (alias de execute)")
         self.execute()
-        self._esperar_resultados()
+
+    # --- Legacy: esperar formulario antiguo, puede borrarse tras migración ---
+    def esperar_formulario_legacy(self, timeout: int = 30000):
+        """Esperar al formulario y a los campos específicos (legacy)."""
+        self.wait_for_form(timeout=timeout)
+        for locator in self.form_locators.values():
+            self.page.wait_for_selector(locator[0], timeout=timeout)

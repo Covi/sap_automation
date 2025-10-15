@@ -46,6 +46,7 @@ class SAPPageBase(PageBase):
         """
         Espera a que el indicador de carga principal de SAP desaparezca.
         Esto indica que la página ha terminado de cargar y está interactiva.
+        FIXME Esto no está funcionando bien en todas las pantallas.
         """
         log.info("Esperando a que la página esté completamente cargada y sin bloqueos...")
         try:
@@ -66,7 +67,9 @@ class SAPPageBase(PageBase):
         Espera a que el formulario principal esté visible.
         Úsalo solo si la página realmente tiene formulario.
         """
-        log.info("Esperando a que el formulario principal esté visible...")
+        # FIXME Aquí self.form no es un locator sino nuestro objeto SAPFormComponent, 
+        # porque se hereda desde sap_report_page.py. Hay que solucionarlo.
+        log.info(f"Esperando a que el formulario principal esté visible... {self.form}")
         try:
             self.form.wait_for(state="visible", timeout=timeout)
             log.info("Formulario principal visible.")

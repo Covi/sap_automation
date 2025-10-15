@@ -7,7 +7,7 @@ from .sap_page_base import PlaywrightTimeoutError
 # Componentes y Estrategias
 from core.components.form.sap_form_strategies import RangeFillStrategy, FormFillingStrategy
 from core.components.table.sap_table_component import SAPTableComponent
-from core.components.decorators.grid_view_decorator import GridViewDecorator
+from core.components.decorators.sap_grid_view_decorator import SAPGridViewDecorator
 
 log = logging.getLogger(__name__)
 
@@ -20,9 +20,9 @@ class ZsinOrdenesPage(SAPReportPage):
         super().__init__(page, locator_provider)
 
         # --- Definición de componentes y locators específicos de ZSIN_ORDENES ---
-        table_main_locator = self.playwright_page.locator(self._provider.get('results.tabla'))
+        table_main_locator = self.playwright_page.locator(self._provider.get('results.tabla_cts'))
         base_table = SAPTableComponent(self, table_main_locator)
-        self.results_table = GridViewDecorator(base_table)
+        self.results_table = SAPGridViewDecorator(base_table)
 
         self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
 
@@ -46,16 +46,20 @@ class ZsinOrdenesPage(SAPReportPage):
         """Provee la estrategia de rellenado para la clase base."""
         return RangeFillStrategy()
 
-    # --- Implementación de los métodos abstractos obligatorios ---
 
-    def _esperar_resultados(self, timeout: int = 30000) -> None:
-        """Implementa la lógica de espera específica de ZSIN_ORDENES."""
+    # --- Implementación de los métodos abstractos obligatorios ---
+    def esperar_resultados(self, timeout: int = 30000) -> None:
+        """
+        ⚠️ CAMBIO: Antes era _esperar_resultados privado. Ahora es público.
+        Implementa la lógica de espera específica de ZSIN_ORDENES.
+        Debe ser llamado explícitamente desde el flujo que lo necesite.
+        """
         log.debug(f"Esperando hasta {timeout / 1000} segundos a que aparezca la tabla de resultados...")
         self.wait_for_page_to_be_ready(timeout=timeout)
         self.results_table.is_visible(timeout=timeout)
 
-    # --- Métodos específicos de ZSIN_ORDENES que se mantienen ---
 
+    # --- Métodos específicos de ZSIN_ORDENES que se mantienen ---
     def obtener_resultados(self) -> int:
         """Retorna la cantidad de resultados."""
         return self.results_table.get_total_row_count()
