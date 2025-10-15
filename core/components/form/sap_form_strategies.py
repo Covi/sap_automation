@@ -70,6 +70,30 @@ class RangeFillStrategy(FormFillingStrategy):
         if hasta_val:
             locators[1].fill(hasta_val)
 
+class ListFillStrategy(FormFillingStrategy):
+    """
+    Estrategia para rellenar múltiples campos (listas de valores).
+    Cada valor se aplica a su locator correspondiente.
+    """
+    def fill(self, sap_page: SAPPageBase, form_map: dict, field: str, value: list):
+        """
+        Rellena un conjunto de campos a partir de una lista de valores.
+        """
+        locators = form_map[field]
+        if not isinstance(locators, list):
+            raise TypeError(
+                f"La estrategia de lista esperaba una lista de locators para '{field}'."
+            )
+        if len(value) > len(locators):
+            raise ValueError(
+                f"El valor del campo '{field}' tiene más elementos ({len(value)}) que locators ({len(locators)})."
+            )
+
+        for val, loc in zip(value, locators):
+            if val not in (None, ""):
+                loc.fill(str(val))
+
+
 # Aquí podrías añadir futuras estrategias más complejas, como...
 # class DropdownFillStrategy(FormFillingStrategy):
 #     def fill(self, sap_page: SAPPageBase, form_map: dict, field: str, value: any):

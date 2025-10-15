@@ -1,8 +1,10 @@
+# pages/zsin_ordenes_page.py
+
 import logging
 from typing import Any, Dict
 
-from .sap_report_page import SAPReportPage # <-- Herencia actualizada
 from .sap_page_base import PlaywrightTimeoutError
+from .sap_report_page import SAPReportPage
 
 # Componentes y Estrategias
 from core.components.form.sap_form_strategies import RangeFillStrategy, FormFillingStrategy
