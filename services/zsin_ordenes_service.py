@@ -70,20 +70,13 @@ class ZsinOrdenesService:
                 return
             log.info(f"✅ Se encontraron {total} resultados.")
 
-            log.debug(f"[SERVICE] options.wait_after_results = {options.wait_after_results}")
             # Espera manual tras resultados si está configurada
             if getattr(options, "wait_after_results", False):
                 log.info("Pausa manual tras obtener resultados (solo modo UI).")
                 self._page.pause()
 
             # --- OPTIONS ---
-            if options.reenviar:
-                log.info("Acción: Reenviar órdenes.")
-                self._page.seleccionar_todas_las_ordenes()
-                self._page.reenviar_ordenes()
-
-            #self._page.pause()  # FIXME DEBUG
-
+            # IMPRIMIR
             if options.imprimir:
                 if not (self._file_handler and self._print_service):
                     log.warning("No se inyectaron dependencias de archivo/impresión. Se omite paso de impresión.")
@@ -103,6 +96,14 @@ class ZsinOrdenesService:
                 log.debug(f"✅ PDF guardado con éxito en: {pdf_path.resolve()}")
 
                 self._print_service.imprimir_fichero(pdf_path)
+
+            # REENVIAR
+            if options.reenviar:
+                log.info("Acción: Reenviar órdenes.")
+                self._page.seleccionar_todas_las_ordenes()
+                self._page.reenviar_ordenes()
+
+            #self._page.pause()  # FIXME DEBUG
 
         except Exception as e:
             log.error(f"Error en ZSIN_ORDENES: {e}", exc_info=True)

@@ -13,14 +13,15 @@ class ZsinOrdenesPage(SAPReportPage):
     def __init__(self, page: SAPReportPage, locator_provider: Any):
         super().__init__(page, locator_provider)
 
+
+        # Locators:
         # Tabla de resultados
         table_main_locator = self.playwright_page.locator(self._provider.get('results.tabla_cts'))
         base_table = SAPTableComponent(self, table_main_locator)
         self.results_table = SAPGridViewDecorator(base_table)
 
-        self.print_dialog_button = self.playwright_page.locator(
-            self._provider.get('print_dialog.boton_imprimir')
-        )
+        #self.print_dialog_button = self.playwright_page.get_by_role('button', name='Visualización de impresión')
+        self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
 
     @property
     def form_locators(self) -> Dict[str, Any]:

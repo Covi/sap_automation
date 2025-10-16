@@ -43,4 +43,5 @@ exportar_datos = "[title*='Exportar datos']"
 [print_dialog]
 # FIXME: Estos también son frágiles y deberían ser reemplazados.
 input_tipo_impresora = "[id='M1:46:::0:17']"
-boton_imprimir = "[title='Visualización de impresión']"
+boton_imprimir_legacy = "[title='Visualización de impresión']"
+boton_imprimir = "role=button[name='Visualización de impresión']"
