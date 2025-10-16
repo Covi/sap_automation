@@ -23,7 +23,6 @@ class SAPMenuComponent(SAPComponent):
         """
         Localiza un elemento de menú por su texto, priorizando roles semánticos.
         """
-        # FIXME Hay que usar locators de archivos .toml y los providers
         locator_con_rol = self.playwright_page.get_by_role("cell", name=text, exact=True) \
             .or_(self.playwright_page.get_by_role("button", name=text, exact=True)) \
             .or_(self.playwright_page.get_by_role("menuitem", name=text, exact=True))
@@ -38,4 +37,4 @@ class SAPMenuComponent(SAPComponent):
         for item_text in path:
             menu_item = self._get_menu_item(item_text).first
             menu_item.click()
-            log.debug(f"Clic en el menú: {item_text}")
+            log.info(f"Clic en el menú: {item_text}")

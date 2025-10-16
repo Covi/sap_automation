@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Callable, Dict, Optional, Protocol
 
 from config import ZsinOrdenesConfig
 from core.builders.sap_payload_builder import SapPayloadBuilder
@@ -20,6 +20,37 @@ class FileHandlerProtocol(Protocol):
 
 class PrintServiceProtocol(Protocol):
     def imprimir_fichero(self, ruta_fichero: Path) -> None: ...
+
+class EnvioOrdenesService:
+    def __init__(self, page: ZsinOrdenesPage, logger: logging.Logger):
+        self._page = page
+        self._log = logger
+
+    def ejecutar(self):
+        self._log.info("Acción: Reenviar órdenes.")
+        self._page.seleccionar_todas_las_ordenes()
+        self._page.reenviar_ordenes()
+        self._log.info("✅ Reenvío completado correctamente.")
+
+class ImpresionOrdenesService:
+    def __init__(self, page, file_handler, print_service, logger):
+        self._page = page
+        self._file_handler = file_handler
+        self._print_service = print_service
+        self._log = logger
+
+    def ejecutar(self, filename: str, path: Path):
+        self._log.info("Acción: Imprimir órdenes.")
+        self._page.seleccionar_todas_las_ordenes()
+
+        self._log.debug(f"Esperando fichero de descarga que contenga: '{filename}'")
+        pdf_bytes = self._page.descargar_pdf(filename)
+        pdf_path = self._file_handler.save_with_timestamp(pdf_bytes, path, filename)
+        self._log.debug(f"✅ PDF guardado con éxito en: {pdf_path.resolve()}")
+
+        self._print_service.imprimir_fichero(pdf_path)
+        self._log.info("✅ Impresión completada correctamente.")
+
 
 class ZsinOrdenesService:
     """
@@ -43,6 +74,26 @@ class ZsinOrdenesService:
         self._file_handler = file_handler
         self._print_service = print_service
 
+        # Inyección de subservicios especializados
+        self._impresion = None
+        self._envio = None
+
+        if file_handler and print_service:
+            self._impresion = ImpresionOrdenesService(page, file_handler, print_service, log)
+        self._envio = EnvioOrdenesService(page, log)
+
+    def _ejecutar_seguro(self, funcion: Callable, nombre_accion: str) -> Dict[str, str]:
+        """
+        Ejecuta una acción y captura posibles errores, devolviendo un dict con estado.
+        """
+        try:
+            funcion()
+            log.info(f"{nombre_accion} completada con éxito.")
+            return {"status": "ok"}
+        except Exception as e:
+            log.error(f"Error en {nombre_accion}: {e}", exc_info=True)
+            return {"status": "error", "error": str(e)} 
+
     # --- La firma y la lógica del método 'run' se actualizan ---
     def run(self, criteria: ZsinOrdenesCriteria, options: ZsinOrdenesExecutionOptions):
         """
@@ -52,6 +103,8 @@ class ZsinOrdenesService:
         :param options: Opciones de ejecución (acciones, configuración de salida).
         """
         try:
+            resultados: Dict[str, Dict[str, str]] = {}
+
             self._transaction_service.run_transaction(self._config.TRANSACTION_CODE)
 
             # Modelo
@@ -75,35 +128,27 @@ class ZsinOrdenesService:
                 log.info("Pausa manual tras obtener resultados (solo modo UI).")
                 self._page.pause()
 
-            # --- OPTIONS ---
-            # IMPRIMIR
-            if options.imprimir:
-                if not (self._file_handler and self._print_service):
-                    log.warning("No se inyectaron dependencias de archivo/impresión. Se omite paso de impresión.")
-                    return
+            # --- Opciones ---
+            if options.reenviar and self._envio:
+                resultados["envio"] = self._ejecutar_seguro(
+                    self._envio.ejecutar,
+                    "Reenvío"
+                )
 
-                log.info("Acción: Imprimir órdenes.")
-                self._page.seleccionar_todas_las_ordenes()
+            if options.imprimir and self._impresion:
+                resultados["impresion"] = self._ejecutar_seguro(
+                    lambda: self._impresion.ejecutar(
+                        options.output_filename, options.output_path
+                    ),
+                    "Impresión"
+                )
 
-                # FIXME Estos ajustes están viniendo del builder, para empezar no los estamos comprobando
-                # y habría que ver si esto se tendría que agnostizar, al igual que lo siguiente, lo veo demasiado verboso
-                filename = options.output_filename
-                path = options.output_path
+            # Espera opcional tras resultados
+            if getattr(options, "wait_after_results", False):
+                log.info("Pausa manual tras obtener resultados (solo modo UI).")
+                self._page.pause()
 
-                log.debug(f"Esperando fichero de descarga que contenga: '{filename}'")
-                pdf_bytes = self._page.descargar_pdf(filename)
-                pdf_path = self._file_handler.save_with_timestamp(pdf_bytes, path, filename)
-                log.debug(f"✅ PDF guardado con éxito en: {pdf_path.resolve()}")
-
-                self._print_service.imprimir_fichero(pdf_path)
-
-            # REENVIAR
-            if options.reenviar:
-                log.info("Acción: Reenviar órdenes.")
-                self._page.seleccionar_todas_las_ordenes()
-                self._page.reenviar_ordenes()
-
-            #self._page.pause()  # FIXME DEBUG
+            return resultados
 
         except Exception as e:
             log.error(f"Error en ZSIN_ORDENES: {e}", exc_info=True)

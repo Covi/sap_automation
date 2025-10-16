@@ -20,8 +20,8 @@ class ZsinOrdenesPage(SAPReportPage):
         base_table = SAPTableComponent(self, table_main_locator)
         self.results_table = SAPGridViewDecorator(base_table)
 
-        #self.print_dialog_button = self.playwright_page.get_by_role('button', name='Visualización de impresión')
-        self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
+        #self.print_dialog_button = self.playwright_page.locator(self._provider.get('print_dialog.boton_imprimir'))
+        self.print_dialog_button = self.playwright_page.get_by_role('button', name='Visualización de impresión')
 
     @property
     def form_locators(self) -> Dict[str, Any]:
@@ -49,6 +49,8 @@ class ZsinOrdenesPage(SAPReportPage):
 
     def seleccionar_todas_las_ordenes(self):
         self.results_table.select_all()
+
+    # Post Resultados
 
     def reenviar_ordenes(self):
         self.results_table.click_toolbar_button("Reenviar")
