@@ -42,12 +42,12 @@ class BaseConfig:
     """
     # Se usa field para añadir metadatos y ocultar las credenciales
     SAP_USERNAME: str = field(
-        default=os.getenv("SAP_USER"), 
+        default=os.getenv("SAP_USER", 'usuario_por_defecto'), 
         metadata={'sensitive': True}, 
         repr=False
     )
     SAP_PASSWORD: str = field(
-        default=os.getenv("SAP_PASSWORD"), 
+        default=os.getenv("SAP_PASSWORD", 'contraseña_por_defecto'), 
         metadata={'sensitive': True}, 
         repr=False
     )
