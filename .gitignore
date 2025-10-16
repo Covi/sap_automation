@@ -26,4 +26,5 @@ env/
 # Si tienes archivos de configuración sensibles, ¡AÑÁDELOS AQUÍ!
 # ejemplo: config.ini
 # ejemplo: secretos
+config/perfil*
 auth*.json
