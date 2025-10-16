@@ -53,7 +53,7 @@ class BaseConfig:
     )
 
     # El resto de los campos permanece igual
-    DOWNLOAD_DIR: str = os.getenv("DOWNLOAD_DIR", "/home/covi/Descargas")
+    DOWNLOAD_DIR: str = os.getenv("DOWNLOAD_DIR", "/tmp")
     DEFAULT_CENTRO: str = "E086"  # Valor por defecto común, puede ser sobrescrito
     # Formato de fecha global
     DATE_FORMAT: str = "%d.%m.%Y"
