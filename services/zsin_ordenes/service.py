@@ -1,56 +1,26 @@
-# services/zsin_ordenes_service.py
+# Fichero: services/zsin_ordenes/service.py (Organizado según PEP 8)
 
+# 1. LIBRERÍA ESTÁNDAR
 import logging
-from pathlib import Path
-from typing import Callable, Dict, Optional, Protocol
+from typing import Callable, Dict, Optional # Ordenado alfabéticamente
 
+# 2. LIBRERÍAS DE TERCEROS (Asumimos que estas no son externas/terceras en este ejemplo)
+# Si tuvieras 'requests' o algo similar, iría aquí.
+
+# 3. MÓDULOS LOCALES (Tu Proyecto)
 from config import ZsinOrdenesConfig
 from core.builders.sap_payload_builder import SapPayloadBuilder
-
-# --- CAMBIO CLAVE: Importación actualizada a la nueva ruta y nombres ---
+from core.protocols import FileHandlerProtocol, PrintServiceProtocol
+from pages.zsin_ordenes_page import ZsinOrdenesPage
 from schemas.zsin_ordenes import ZsinOrdenesCriteria, ZsinOrdenesExecutionOptions
 from services.transaction_service import TransactionService
-from pages.zsin_ordenes_page import ZsinOrdenesPage
+
+# 4. IMPORTACIONES RELATIVAS (Dentro del paquete 'zsin_ordenes')
+from .envio_action import EnvioOrdenesService
+from .impresion_action import ImpresionOrdenesService
+
 
 log = logging.getLogger(__name__)
-
-# --- Protocolos para dependencias externas (sin cambios) ---
-class FileHandlerProtocol(Protocol):
-    def save_with_timestamp(self, data: bytes, path: Path, filename: str) -> Path: ...
-
-class PrintServiceProtocol(Protocol):
-    def imprimir_fichero(self, ruta_fichero: Path) -> None: ...
-
-class EnvioOrdenesService:
-    def __init__(self, page: ZsinOrdenesPage, logger: logging.Logger):
-        self._page = page
-        self._log = logger
-
-    def ejecutar(self):
-        self._log.info("Acción: Reenviar órdenes.")
-        self._page.seleccionar_todas_las_ordenes()
-        self._page.reenviar_ordenes()
-        self._log.info("✅ Reenvío completado correctamente.")
-
-class ImpresionOrdenesService:
-    def __init__(self, page, file_handler, print_service, logger):
-        self._page = page
-        self._file_handler = file_handler
-        self._print_service = print_service
-        self._log = logger
-
-    def ejecutar(self, filename: str, path: Path):
-        self._log.info("Acción: Imprimir órdenes.")
-        self._page.seleccionar_todas_las_ordenes()
-
-        self._log.debug(f"Esperando fichero de descarga que contenga: '{filename}'")
-        pdf_bytes = self._page.descargar_pdf(filename)
-        pdf_path = self._file_handler.save_with_timestamp(pdf_bytes, path, filename)
-        self._log.debug(f"✅ PDF guardado con éxito en: {pdf_path.resolve()}")
-
-        self._print_service.imprimir_fichero(pdf_path)
-        self._log.info("✅ Impresión completada correctamente.")
-
 
 class ZsinOrdenesService:
     """
@@ -123,13 +93,14 @@ class ZsinOrdenesService:
                 return
             log.info(f"✅ Se encontraron {total} resultados.")
 
-            # --- Opciones ---
+            # --- Reenviar ---
             if options.reenviar and self._envio:
                 resultados["envio"] = self._ejecutar_seguro(
                     self._envio.ejecutar,
                     "Reenvío"
                 )
 
+            # --- Imprimir ---
             if options.imprimir and self._impresion:
                 resultados["impresion"] = self._ejecutar_seguro(
                     lambda: self._impresion.ejecutar(
@@ -138,13 +109,13 @@ class ZsinOrdenesService:
                     "Impresión"
                 )
 
-            # --- Fin ---
             # Espera manual tras resultados si está configurada
             # No hace falta getattr porque wait_after_results es pydantic y está en ZsinOrdenesExecutionOptions
             if options.wait_after_results:
                 log.info("Pausa manual tras obtener resultados (solo modo UI).")
                 self._page.pause()
 
+            # --- Fin, return ---
             return resultados
 
         except Exception as e:
