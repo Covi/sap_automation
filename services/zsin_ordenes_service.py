@@ -110,23 +110,18 @@ class ZsinOrdenesService:
             # Modelo
             payload = SapPayloadBuilder.build_payload(criteria)
             # Recuperar la espera del formulario antes de rellenarlo
-            self._page.esperar_formulario() # <--- ¡AÑADE ESTA LÍNEA!
+            self._page.esperar_formulario()
             self._page.rellenar_formulario(payload)
             self._page.ejecutar()
             self._page.esperar_resultados(60000)
 
-            # Resultados
+            # --- Resultados ---
             total = self._page.obtener_resultados()
 
             if total < 1:
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
                 return
             log.info(f"✅ Se encontraron {total} resultados.")
-
-            # Espera manual tras resultados si está configurada
-            if getattr(options, "wait_after_results", False):
-                log.info("Pausa manual tras obtener resultados (solo modo UI).")
-                self._page.pause()
 
             # --- Opciones ---
             if options.reenviar and self._envio:
@@ -143,8 +138,10 @@ class ZsinOrdenesService:
                     "Impresión"
                 )
 
-            # Espera opcional tras resultados
-            if getattr(options, "wait_after_results", False):
+            # --- Fin ---
+            # Espera manual tras resultados si está configurada
+            # No hace falta getattr porque wait_after_results es pydantic y está en ZsinOrdenesExecutionOptions
+            if options.wait_after_results:
                 log.info("Pausa manual tras obtener resultados (solo modo UI).")
                 self._page.pause()
 
