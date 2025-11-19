@@ -1,3 +1,5 @@
+# pages/iq09_page.py
+
 import logging
 from typing import Any, Dict
 
@@ -8,6 +10,7 @@ from .sap_report_page import SAPReportPage
 # Componentes y Estrategias
 from core.components.form.sap_form_strategies import SimpleFillStrategy, FormFillingStrategy
 from core.components.menu.sap_menu_component import SAPMenuComponent
+from core.components.table.sap_table_component import SAPTableComponent
 from core.components.dialog.sap_menu_export_dialog import SAPMenuExportDialog
 
 log = logging.getLogger(__name__)
@@ -21,12 +24,18 @@ class Iq09Page(SAPReportPage):
         super().__init__(page, locator_provider)
 
         # --- Definición de componentes y locators específicos de IQ09 ---
-        self.results_table = self.playwright_page.locator(self._provider.get('results.tabla_resultados'))
         self.menu = SAPMenuComponent(self)
         self.export_dialog = SAPMenuExportDialog(self)
 
-    # --- Implementación de las propiedades abstractas obligatorias ---
+        # Tabla de resultados:
+        # "Dentro del div Raster Layout (RL), busca la tabla STCS"
+        locator = "div[ct='RL'] >> table[ct='STCS']"
+        #locator = "table[ct='STCS']"
+        self._results_table_locator = self.playwright_page.locator(locator)
+        self.table = SAPTableComponent(self, self._results_table_locator)
 
+
+    # --- Implementación de las propiedades abstractas obligatorias ---
     @property
     def form_locators(self) -> Dict[str, Any]:
         """Provee el mapa de locators del formulario para la clase base."""
@@ -41,17 +50,22 @@ class Iq09Page(SAPReportPage):
         return SimpleFillStrategy()
 
     # --- Implementación de los métodos abstractos obligatorios ---
-
-    def _esperar_resultados(self, timeout: int = 30000):
-        """Implementa la lógica de espera específica de IQ09."""
-        self.results_table.wait_for(timeout=timeout)
-        log.debug("Tabla de resultados de IQ09 visible.")
+    def esperar_resultados(self, timeout: int = 30000):
+        """
+        Implementa la lógica de espera específica de la transacción IQ09.
+        En este caso, esperamos a que la tabla de resultados aparezca.
+        """
+        log.debug("Esperando la tabla de resultados de IQ09...")
+        # Usamos el método is_visible del componente que ya gestiona esperas
+        if not self.table.is_visible(timeout=timeout):
+             # Si falla, el propio componente ya habrá logueado el warning,
+             # pero aquí podemos lanzar el error de Playwright para que suba.
+             raise TimeoutError("La tabla no apareció a tiempo.")
 
     # --- Métodos específicos de IQ09 que se mantienen ---
-
     def is_results_table_visible(self) -> bool:
         """Comprueba si la tabla de resultados del informe está visible."""
-        return self.results_table.is_visible()
+        return self.table.is_visible(timeout=1000) # Check rápido
 
     def descargar_informe(self) -> Download:
         """Inicia la descarga a través de la navegación por el menú de SAP."""
