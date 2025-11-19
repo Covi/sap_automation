@@ -88,6 +88,10 @@ class ZsinOrdenesService:
             # --- Resultados ---
             total = self._page.obtener_resultados()
 
+            # FIXME Pausa con resultados
+            # log.info("Pausa manual para ver los resultados (solo modo UI).")
+            # self._page.pause()
+
             if total < 1:
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
                 return
@@ -109,6 +113,7 @@ class ZsinOrdenesService:
                     "Impresión"
                 )
 
+            # FIXME No está pausando
             # Espera manual tras resultados si está configurada
             # No hace falta getattr porque wait_after_results es pydantic y está en ZsinOrdenesExecutionOptions
             if options.wait_after_results:
