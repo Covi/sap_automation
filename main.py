@@ -1,4 +1,4 @@
-# main.py (VERSIÓN FINAL Y CORRECTA)
+# main.py
 
 import logging, os, sys
 from core.logging.logger_config import setup_logging

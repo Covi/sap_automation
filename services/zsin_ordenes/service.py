@@ -82,6 +82,9 @@ class ZsinOrdenesService:
             # Recuperar la espera del formulario antes de rellenarlo
             self._page.esperar_formulario()
             self._page.rellenar_formulario(payload)
+            # FIXME Pausa con resultados
+            # log.info("Pausa manual para ver el formulario (solo modo UI).")
+            # self._page.pause()
             self._page.ejecutar()
             self._page.esperar_resultados(60000)
 
