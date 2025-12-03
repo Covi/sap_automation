@@ -1,11 +1,9 @@
-# Fichero: config/config.toml
-
 # --- Configuración General de la Aplicación ---
 [general]
 base_url = "https://s4pf.refrival.com/sap/bc/gui/sap/its/webgui?sap-language=ES"
 default_timeout = 30000
 default_browser = "firefox"
-download_dir = "/home/covi/Descargas"
+# download_dir se calcula automáticamente, no lo pongas aquí salvo que quieras forzarlo.
 default_centro = "E086"
 date_format = "%d.%m.%Y"
 
@@ -33,5 +31,5 @@ log_format = "%(asctime)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d
     transaction_code = "ZSIN_ORDENES"
     export_filename = "smart"
     locator_file = "zsin_ordenes.toml"
-    # Se puede sobreescribir un valor general para una transacción específica
+    # Aquí sí puedes forzar una ruta específica si quieres
     download_dir = "/home/covi/Descargas/ordenes_sap"

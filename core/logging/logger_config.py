@@ -2,7 +2,9 @@
 
 import logging, warnings
 import sys
-from config import LogConfig  # sigues usando tu config en raíz
+
+# TODO: [REFACTOR] Desacoplar. Injectar configuración en lugar de importar settings globales.
+from config import settings 
 
 # Redirige las advertencias del módulo 'warnings' al sistema de logging
 logging.captureWarnings(True)
@@ -11,9 +13,13 @@ def setup_logging(log_level: str | None = None):
     """
     Idempotente: llama varias veces sin duplicar handlers.
     - Si log_level se pasa, tiene prioridad (CLI / FastAPI).
-    - Si no, usa LogConfig.LOG_LEVEL (servicio).
+    - Si no, usa settings.logging.log_level.
     """
-    level_str = (log_level or getattr(LogConfig, "LOG_LEVEL", "INFO")).upper()
+    # 1. Determinamos el nivel
+    #    Prioridad: Argumento explícito > Configuración TOML > Default 'INFO'
+    config_level = settings.logging.log_level
+    level_str = (log_level or config_level).upper()
+    
     level = getattr(logging, level_str, logging.INFO)
 
     root = logging.getLogger()
@@ -23,14 +29,17 @@ def setup_logging(log_level: str | None = None):
     if root.handlers:
         return root
 
-    fmt = getattr(LogConfig, "LOG_FORMAT", "%(asctime)s - %(levelname)s - %(message)s")
+    # 2. Configuración del Formato
+    fmt = settings.logging.log_format
     formatter = logging.Formatter(fmt)
 
+    # 3. Handler de Consola
     ch = logging.StreamHandler(sys.stdout)
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
-    fh = logging.FileHandler(getattr(LogConfig, "LOG_FILE", "app.log"), mode="a", encoding="utf-8")
+    # 4. Handler de Archivo
+    fh = logging.FileHandler(settings.logging.log_file, mode="a", encoding="utf-8")
     fh.setFormatter(formatter)
     root.addHandler(fh)
 

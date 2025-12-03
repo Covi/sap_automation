@@ -2,12 +2,9 @@
 
 from datetime import date
 from pydantic import BaseModel
-from typing import Any, Dict, Callable, Tuple
 
-# FIXME a ver si esto se inyecta o qué
-from config import ZsinOrdenesConfig
-config = ZsinOrdenesConfig()
-
+# --- CAMBIO: Importamos la configuración global cargada ---
+from config import settings
 from . import formatters
 
 
@@ -17,8 +14,9 @@ class SapPayloadBuilder:
     Convierte tipos de datos puros del modelo (ej: date, bool, tuple)
     en los strings que la UI de SAP necesita.
     """
-    # Formato de fecha configurable desde el builder
-    DATE_FORMAT = config.DATE_FORMAT
+    # Obtenemos el formato de fecha de la configuración general.
+    # Esto desacopla el builder de cualquier transacción específica (ZsinOrdenes).
+    DATE_FORMAT = settings.general.date_format
 
     @classmethod
     def build_payload(cls, form_data: BaseModel) -> dict:

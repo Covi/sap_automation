@@ -1,6 +1,10 @@
+# pages/page_base.py
+
 import logging
 from playwright.sync_api import expect, Page, Locator, TimeoutError as PlaywrightTimeoutError
-from config import BASE_URL
+
+# --- CAMBIO: Importamos el Singleton de configuración ---
+from config import settings
 
 log = logging.getLogger(__name__)
 
@@ -13,7 +17,9 @@ class PageBase:
         if not isinstance(page, Page):
             raise TypeError("Se esperaba un objeto Page de Playwright.")
         self.page = page
-        self.base_url = BASE_URL
+        
+        # --- CAMBIO: Accedemos a la URL desde la configuración validada ---
+        self.base_url = settings.general.base_url
 
     @property
     def playwright_page(self) -> Page:

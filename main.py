@@ -3,7 +3,9 @@
 import logging, os, sys
 from core.logging.logger_config import setup_logging
 from core.cli_handler import CliHandler
-from config import BaseConfig, BASE_URL
+
+# --- CAMBIO IMPORTANTE: Importamos la configuración unificada y validada ---
+from config import settings
 
 # --- Abstracciones y Estrategias ---
 from core.protocols.closing_strategy_protocol import ClosingStrategy
@@ -47,7 +49,7 @@ def main() -> None:
 
     # Elegimos la estrategia de cierre basada en la configuración
     closing_strategy: ClosingStrategy
-    if run_config.persistent_session: # Asumiendo que tu run_config tiene este flag
+    if run_config.persistent_session: 
         closing_strategy = PersistentClosingStrategy()
         log.info("Usando Estrategia de Cierre Persistente.")
     else:
@@ -69,7 +71,9 @@ def main() -> None:
         page = manager.start_browser_with_session(
             storage_state_path=STATE_FILE if os.path.exists(STATE_FILE) else None
         )
-        page.goto(BASE_URL)
+        
+        # --- CAMBIO: Usamos la URL desde la configuración general ---
+        page.goto(settings.general.base_url)
 
         # --- Composición de la capa de aplicación ---
         locator_factory = LocatorProviderFactory()
@@ -82,8 +86,13 @@ def main() -> None:
         # --- Flujo de negocio de alto nivel ---
         if not session_service.is_session_active():
             log.warning("No se ha detectado sesión activa. Procediendo con el login...")
-            credentials = BaseConfig()
-            login_service.login(user=credentials.SAP_USERNAME, pss=credentials.SAP_PASSWORD)
+            
+            # --- CAMBIO: Uso de credenciales centralizadas y seguras ---
+            # Nota: .get_secret_value() es necesario porque definimos sap_password como SecretStr
+            login_service.login(
+                user=settings.sap_username, 
+                pss=settings.sap_password.get_secret_value()
+            )
             manager.save_session(STATE_FILE)
         else:
             log.info("Sesión recuperada con éxito desde el fichero de estado.")
