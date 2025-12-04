@@ -76,7 +76,10 @@ def main() -> None:
         page.goto(settings.general.base_url)
 
         # --- Composición de la capa de aplicación ---
+        # FIXME: Refactorizar para inyectar configuración de rutas (ver LocatorProviderFactory)
+        # locator_factory = LocatorProviderFactory(settings.paths.common, settings.paths.locators)
         locator_factory = LocatorProviderFactory()
+
         login_page = SAPLoginPage(page, locator_factory.create("login.toml"))
         easy_access_page = SAPEasyAccessPage(page, locator_factory.create("easy_access.toml"))
 
