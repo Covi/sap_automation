@@ -154,7 +154,7 @@ class SAPPageBase(PageBase):
                 message_text = status_bar.get_attribute("title")
                 log.info(f"Detectado mensaje de tipo '{message_type}': '{message_text}'")
                 return message_text
-            
+
             return None
         except PlaywrightTimeoutError:
             return None

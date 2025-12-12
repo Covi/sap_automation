@@ -1,4 +1,4 @@
-# Fichero: services/zsin_ordenes/impresion_action.py
+# services/zsin_ordenes/impresion_action.py
 import logging
 from pathlib import Path
 
@@ -28,5 +28,5 @@ class ImpresionOrdenesService:
         pdf_path = self._file_handler.save_with_timestamp(pdf_bytes, path, filename)
         self._log.debug(f"✅ PDF guardado con éxito en: {pdf_path.resolve()}")
 
-        self._print_service.imprimir_fichero(pdf_path)
+        # FIXME Temporal para pruebas self._print_service.imprimir_fichero(pdf_path)
         self._log.info("✅ Impresión completada correctamente.")

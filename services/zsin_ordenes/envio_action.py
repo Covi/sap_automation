@@ -1,4 +1,4 @@
-# Fichero: services/zsin_ordenes/envio_action.py
+# services/zsin_ordenes/envio_action.py
 import logging
 
 # Asumo que 'pages' está al mismo nivel que 'services'

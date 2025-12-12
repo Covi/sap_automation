@@ -12,6 +12,7 @@ class ZsinOrdenesCriteria(BaseModel):
     Define los CRITERIOS DE BÚSQUEDA para la transacción ZSIN_ORDENES.
     Su única responsabilidad es validar y almacenar los filtros del formulario.
     """
+    # FIXME O usas español o inglés, pero no este puto batiburillo
     status: Optional[Tuple[Optional[str], Optional[str]]] = Field(default=('SE', ''))
     clase: Optional[Tuple[Optional[str], Optional[str]]] = Field(default=('ZR04', 'ZR05'))
     cliente: Optional[Tuple[Optional[str], Optional[str]]] = None
