@@ -12,6 +12,7 @@ class PageBase:
     """
     Clase base para TODAS las Page Objects. Proporciona una envoltura
     robusta sobre el objeto Page de Playwright y métodos de utilidad genéricos.
+    FIXME Hay que ver si este wrapper es necesario o lo olvidamos de una puta vez como la clase Screen de Appium
     """
     def __init__(self, page: Page):
         if not isinstance(page, Page):

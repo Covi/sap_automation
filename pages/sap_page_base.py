@@ -1,4 +1,4 @@
-# pages/sap_page_base.py
+# pages/sap_page_base.py (ACTUALIZADO CON MEJOR DEPURACIÓN)
 
 import logging
 from typing import Any, Literal, Optional
@@ -19,10 +19,9 @@ class SAPPageBase(PageBase):
         # ==========================================================
         # Elementos comunes específicos de la UI de SAP
 
-        # TODO ¿Meter un try except y lanzar un error si no encuentra el locator?
-
         # Locator específico y robusto para la barra de estado de SAP
         self.status_bar_old = self.playwright_page.locator(self._provider.get('common.status_bar'))
+        # Aseguramos el uso del locator robusto
         self.status_bar = self.playwright_page.locator("#wnd\\[0\\]\\/sbar_msg")
 
         self.execute_button = self.playwright_page.locator(self._provider.get('common.ejecutar'))
@@ -57,21 +56,25 @@ class SAPPageBase(PageBase):
     def wait_for_page_to_be_ready(self, timeout: int = 30000):
         """
         Espera a que el indicador de carga principal de SAP desaparezca.
-        Esto indica que la página ha terminado de cargar y está interactiva.
-        FIXME Esto no está funcionando bien en todas las pantallas.
         """
         log.info("Esperando a que la página esté completamente cargada y sin bloqueos...")
+        
+        # 1. FASE DE DETECCIÓN (T1): Esperamos a que el bloqueador aparezca.
+        # Este timeout es de detección (lo hemos aumentado a 10s para evitar el error de 2s)
+        DETECTION_TIMEOUT = 10000 
         try:
-            # Esperamos a que el bloqueador aparezca primero (puede ser instantáneo)
-            self.load_indicator.wait_for(state='visible', timeout=2000)
+            self.load_indicator.wait_for(state='visible', timeout=DETECTION_TIMEOUT) 
             log.debug("Indicador de carga detectado, esperando a que desaparezca.")
-        except Exception:
-            # Si no aparece en 2s, asumimos que la página ya estaba lista.
-            log.debug("No se detectó indicador de carga, la página parece estar lista.")
+            
+        # Utilizamos la excepción específica para ser robustos.
+        except PlaywrightTimeoutError: 
+            # Si no aparece en 10s, asumimos que la página ya estaba lista.
+            log.debug(f"No se detectó indicador de carga en {DETECTION_TIMEOUT/1000}s, la página parece estar lista.")
             return
 
-        # Ahora esperamos a que desaparezca
-        self.load_indicator.wait_for(state='hidden', timeout=timeout)
+        # 2. FASE DE EJECUCIÓN (T2): Esperamos a que desaparezca.
+        # Aquí sí usamos el 'timeout' que pasa la función (el timeout total de la transacción).
+        self.load_indicator.wait_for(state='hidden', timeout=timeout) 
         log.info("Indicador de carga ha desaparecido. La página está lista.")
 
     def wait_for_form(self, timeout: int = 10000):
@@ -97,6 +100,7 @@ class SAPPageBase(PageBase):
         Args:
             button_text: El texto exacto del botón en el que hacer clic (ej: "Continuar", "Aceptar", "Cancelar").
             timeout: Tiempo máximo de espera para el botón.
+        TODO ¿Se está usando???
         """
         try:
             # El selector ahora es DINÁMICO. Construye el locator usando
@@ -105,7 +109,7 @@ class SAPPageBase(PageBase):
             
             locator.click(timeout=timeout)
             log.info(f"Diálogo emergente con botón '{button_text}' detectado y gestionado.")
-        except TimeoutError:
+        except PlaywrightTimeoutError:
             log.debug(f"No se encontró diálogo emergente con botón '{button_text}'.")
             pass
 
@@ -113,48 +117,54 @@ class SAPPageBase(PageBase):
     # MÉTODOS DE LA BARRA DE ESTADO (Status Bar)
     # ==========================================================
 
-    def get_status_bar_text(self) -> str:
-        """Espera y devuelve el texto de la barra de estado de SAP."""
-        self.status_bar.wait_for(state="visible")
-        return self.status_bar.inner_text()
-
     def get_status_bar_message(self) -> Optional[str]:
         """
-        Espera a que aparezca un mensaje en la barra de estado y devuelve su texto.
-        Devuelve None si no aparece ningún mensaje en el tiempo de espera.
+        ÁTOMO 1: Obtiene el mensaje completo de la barra de estado.
+        Gestiona la espera (wait_for) y la extracción del atributo 'title' (texto completo).
         """
         try:
-            # Usamos el locator que apunta a la barra de estado
+            # Centralizamos aquí el timeout y la espera de visibilidad
             self.status_bar.wait_for(state="visible", timeout=2500)
             
-            # El texto completo suele estar en el atributo 'title'
+            # Devolvemos el title, que en SAP contiene el texto completo sin cortar
             return self.status_bar.get_attribute("title")
         except PlaywrightTimeoutError:
-            log.debug("No se encontraron mensajes en la status bar.")
+            # Si falla la espera, asumimos que no hay mensaje
             return None
 
     def check_status_bar_for_message_type(self, 
         message_type: Literal["Error", "Warning", "Success", "Info"]
     ) -> Optional[str]:
         """
-        Comprueba si la barra de estado muestra un mensaje de un tipo específico.
-        Devuelve el texto del mensaje si coincide, si no, devuelve None.
-
-        Args:
-            message_type: El tipo de mensaje a buscar ('Error', 'Warning', etc.).
+        COMPOSICIÓN: Usa 'get_status_bar_message' para obtener el texto y luego
+        valida si el tipo (color/clase) coincide con lo esperado.
         """
-        try:
-            status_bar = self.playwright_page.locator("#wnd\\[0\\]\\/sbar_msg")
-            status_bar.wait_for(state="visible", timeout=2500)
+        # 1. REUTILIZACIÓN: Llamamos al átomo para obtener el texto y gestionar la espera.
+        message_text = self.get_status_bar_message()
 
-            class_attribute = status_bar.get_attribute("class") or ""
-            
-            # Comprobamos si la clase del elemento contiene el tipo de mensaje
-            if f"--{message_type}" in class_attribute:
-                message_text = status_bar.get_attribute("title")
-                log.info(f"Detectado mensaje de tipo '{message_type}': '{message_text}'")
-                return message_text
+        # Si el átomo devolvió None (timeout o no visible), salimos inmediatamente.
+        if message_text is None:
+            return None
 
-            return None
-        except PlaywrightTimeoutError:
-            return None
+        # 2. Lógica específica de ESTE método: Validar la clase CSS (el tipo de mensaje)
+        # Como get_status_bar_message ya aseguró que es visible, podemos pedir el atributo class directamente.
+        # Obtenemos datos para validación y debug
+        class_attribute = self.status_bar.get_attribute("class") or ""
+        message_text = self.get_status_bar_message() # Aquí obtenemos el texto y se espera 2.5s
+
+        # Debug completo reutilizando el texto que ya obtuvimos
+        log.debug(f"Status Bar -> Clase: '{class_attribute}' | Mensaje: '{message_text}'")
+
+        # 3. Verificación
+        if f"--{message_type}" in class_attribute:
+            log.info(f"Mensaje '{message_type}' confirmado: {message_text}")
+            return message_text
+
+        return None
+
+    # OPCIONAL: Si quieres mantener este método por compatibilidad, 
+    # redefínelo para que use también el método bueno y evites el bug de 'inner_text'
+    def get_status_bar_text(self) -> str:
+        """Alias o wrapper simple. Si falla, devuelve cadena vacía para no romper tipos."""
+        val = self.get_status_bar_message()
+        return val if val else ""

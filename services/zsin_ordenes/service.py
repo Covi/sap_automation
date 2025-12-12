@@ -83,7 +83,7 @@ class ZsinOrdenesService:
         
         # 1. Desbloqueo de UI (La base se encarga de esperar el 'ur-loading-box')
         self._page.wait_for_page_to_be_ready(timeout=30000)
-        
+
         # 2. Validación de Negocio (Comprobación de éxito en la barra de estado)
         # Esto confirma que la acción anterior se procesó correctamente.
         success_message = self._page.check_status_bar_for_message_type("Success")
@@ -140,7 +140,7 @@ class ZsinOrdenesService:
                 # *** Se llama al protocolo de estabilización después de Reenvío ***
                 self._estabilizar_ui_post_accion("Reenvío")
 
-            # --- FIXME Pausa DEBUG temporal ---
+            # --- Pausa para DEBUG por argumentos ---
             if options.wait_after_results:
                 self._pause()
 

@@ -69,3 +69,16 @@ class SAPEasyAccessPage(SAPPageBase):
         # Usamos el locator que ya habías identificado
         form_container = self.page.locator('form[ct="FOR"]') # FIXME hardcodeado
         form_container.wait_for(state="visible", timeout=timeout)
+
+    # ==========================================================
+    # SOBRECARGA DE MÉTODOS BASE
+    # ==========================================================
+    def wait_for_page_to_be_ready(self, timeout: int = 5000):
+        """
+        SOBRECARGA: Para Easy Access, la página está lista cuando la barra de comandos
+        está lista. Esto evita el timeout de 10s que ocurre al inicio
+        si usamos la lógica del loading_indicator, que no existe aquí.
+        """
+        # Reutilizamos el método específico de esta página, que es mucho más rápido.
+        self.wait_for_command_bar(timeout=timeout)
+        log.info("Página de Easy Access lista.")
