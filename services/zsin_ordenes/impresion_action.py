@@ -20,6 +20,10 @@ class ImpresionOrdenesService:
         self._log = logger
 
     def ejecutar(self, filename: str, path: Path):
+        """
+        Ejecutar acción
+        FIXME No puede un sólo método hacerlo todo
+        """
         self._log.info("Acción: Imprimir órdenes.")
         self._page.seleccionar_todas_las_ordenes()
 

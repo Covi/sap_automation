@@ -1,3 +1,5 @@
+# core/components/decorators/sap_grid_view_decorator.py
+
 import json
 import logging
 from typing import Optional, Dict, Any
@@ -62,6 +64,33 @@ class SAPGridViewDecorator:
     # --------------------
     # API pública
     # --------------------
+
+    def get_column_names(self) -> list[str]:
+        """
+        Devuelve la lista de IDs técnicos de las columnas definidos en la metadata (lsdata).
+        Es vital para mapear los valores extraídos con su campo real.
+        
+        Retorna:
+            list[str]: Ejemplo ['ICON', 'NUMEROORDEN', 'STATUS', ...]
+        """
+        metadata = self._get_metadata_object()
+        
+        # Validación defensiva
+        if not metadata:
+            log.warning("No se pudo obtener metadata para extraer nombres de columnas.")
+            return []
+            
+        # 'ColumnIDs' es la clave estándar en SAP WebGUI para GridViews
+        # Verificado en el lsdata que proporcionaste.
+        columns = metadata.get("ColumnIDs", [])
+        
+        if not columns:
+            log.warning("La metadata existe pero no contiene 'ColumnIDs'.")
+            return []
+            
+        log.debug(f"Columnas detectadas en metadata ({len(columns)}): {columns}")
+        return columns
+
     def get_total_row_count(self, fallback: bool = True) -> int:
         """
         Devuelve el número total de filas según la metadata del GridView.

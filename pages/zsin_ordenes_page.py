@@ -1,5 +1,7 @@
+# pages/zsin_ordenes_page.py
+
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 from .sap_report_page import SAPReportPage
 from core.components.table.sap_table_component import SAPTableComponent
 from core.components.decorators.sap_grid_view_decorator import SAPGridViewDecorator
@@ -46,6 +48,33 @@ class ZsinOrdenesPage(SAPReportPage):
 
     def hay_resultados(self) -> bool:
         return self.obtener_resultados() > 0
+
+    def extraer_resultados_estructurados(self) -> List[Dict[str, str]]:
+        """
+        Combina la metadata de columnas con los datos de las filas para generar
+        una lista de diccionarios {ID_COLUMNA: VALOR}.
+        """
+        # 1. Obtenemos nombres de columnas (Metadata)
+        headers = self.results_table.get_column_names()
+        
+        # 2. Obtenemos datos crudos (DOM)
+        raw_rows = self.results_table.get_all_rows_data()
+        
+        structured_data = []
+        
+        if not headers:
+            log.warning("No se obtuvieron cabeceras. Se devolverán datos sin claves.")
+            # Fallback simple si falla la metadata
+            return [{"data": str(row)} for row in raw_rows]
+
+        # 3. Mapeo (Zip)
+        for row in raw_rows:
+            # zip corta en la longitud más corta, evitando errores de índice
+            row_dict = dict(zip(headers, row))
+            structured_data.append(row_dict)
+            
+        log.info(f"Datos estructurados extraídos: {len(structured_data)} registros.")
+        return structured_data
 
     def seleccionar_todas_las_ordenes(self):
         self.results_table.select_all()

@@ -14,9 +14,9 @@ from core.protocols import FileHandlerProtocol, PrintServiceProtocol
 from pages.zsin_ordenes_page import ZsinOrdenesPage
 from schemas.zsin_ordenes import ZsinOrdenesCriteria, ZsinOrdenesExecutionOptions
 from services.transaction_service import TransactionService
+from .backup_action import BackupOrdenesService
 from .envio_action import EnvioOrdenesService
 from .impresion_action import ImpresionOrdenesService
-
 
 log = logging.getLogger(__name__)
 
@@ -47,13 +47,17 @@ class ZsinOrdenesService:
         self._impresion = None
         
         # Inicialización de subservicios
+
+        # Backup: CONDICIONAL (depende de file_handler)
+        if file_handler:
+            self._backup = BackupOrdenesService(file_handler, log)
+
         # Impresión: CONDICIONAL (depende de inyecciones opcionales)
         if file_handler and print_service:
             self._impresion = ImpresionOrdenesService(page, file_handler, print_service, log)
-        
+
         # Envío: OBLIGATORIO (POM que solo depende de Page y Log)
         self._envio = EnvioOrdenesService(page, log) 
-
 
     def _ejecutar_seguro(self, funcion: Callable, nombre_accion: str) -> Dict[str, str]:
         """
@@ -78,6 +82,8 @@ class ZsinOrdenesService:
         """
         Protocolo para estabilizar la UI de SAP después de una acción que implica
         una llamada de red (reenvío, impresión, etc.) y evita el TimeoutError.
+        FIXME Esto..., para empezar es algo más genérico, no sólo de este servicio, 
+        y segundo, seguramente deba ir a POM
         """
         log.info(f"Servicio: Iniciando protocolo de estabilización de la UI tras la acción '{accion_anterior}'.")
         
@@ -120,7 +126,6 @@ class ZsinOrdenesService:
 
             # --- Resultados y Salida Temprana ---
             total = self._page.obtener_resultados()
-
             if total < 1:
                 log.warning("No se encontraron resultados para los criterios de búsqueda.")
                 if options.wait_after_results:
@@ -128,6 +133,23 @@ class ZsinOrdenesService:
                 return 
 
             log.info(f"✅ Se encontraron {total} resultados.")
+
+            # --- Pausa para DEBUG por argumentos ---
+            if options.wait_after_results:
+                self._pause()
+
+            # --- BACKUP DE RESULTADOS (Nuevo) ---
+            if self._backup:
+                datos_estructurados = self._page.extraer_resultados_estructurados()
+
+                # FIXME DEBUG
+                log.info(f'Prueba de datos: {datos_estructurados}')
+                self._pause()
+
+                self._ejecutar_seguro(
+                    lambda: self._backup.ejecutar(datos_estructurados, options.output_path),
+                    "Backup JSON"
+                )
 
             # --- Reenviar (El uso sigue siendo condicional) ---
             envio_service = self._envio
@@ -137,12 +159,8 @@ class ZsinOrdenesService:
                     "Reenvío"
                 )
 
-                # *** Se llama al protocolo de estabilización después de Reenvío ***
+                # Se llama al protocolo de estabilización después de Reenvío
                 self._estabilizar_ui_post_accion("Reenvío")
-
-            # --- Pausa para DEBUG por argumentos ---
-            if options.wait_after_results:
-                self._pause()
 
             # --- Imprimir (Type Narrowing y Optional Check) ---
             impresion_service = self._impresion
@@ -153,12 +171,8 @@ class ZsinOrdenesService:
                     ),
                     "Impresión"
                 )
-                # *** Si hubiera una acción después de Imprimir, se llamaría aquí ***
+                # Si hubiera una acción después de Imprimir, se llamaría aquí
                 # self._estabilizar_ui_post_accion("Impresión")
-
-            # --- Pausa ---
-            if options.wait_after_results:
-                self._pause()
 
             return resultados
 
