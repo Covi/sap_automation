@@ -73,7 +73,7 @@ class ZsinOrdenesService:
 
     def _pause(self):
         """
-        Pausa la ejecución de la página (solo en modo UI).
+        Pausa la ejecución de la página (solo en modo UI). FIXME Esto va a la clase base, ya sea servicio o lo que sea.
         """
         log.info("Pausa manual tras obtener resultados (solo modo UI).")
         self._page.pause()
@@ -86,7 +86,7 @@ class ZsinOrdenesService:
         y segundo, seguramente deba ir a POM
         """
         log.info(f"Servicio: Iniciando protocolo de estabilización de la UI tras la acción '{accion_anterior}'.")
-        
+
         # 1. Desbloqueo de UI (La base se encarga de esperar el 'ur-loading-box')
         self._page.wait_for_page_to_be_ready(timeout=30000)
 
@@ -97,10 +97,10 @@ class ZsinOrdenesService:
             log.warning(f"Servicio: No se detectó mensaje de éxito en barra de estado post-{accion_anterior}.")
         else:
             log.info(f"Servicio: Acción '{accion_anterior}' confirmada por mensaje: '{success_message}'")
-        
+
         # 3. Confirmación de Elemento (Aseguramos que la tabla de resultados sigue interactiva)
         self._page.results_table.is_visible(timeout=5000)
-        
+
         log.info("Servicio: La UI está estable y lista para la siguiente acción.")
 
     def run(self, criteria: ZsinOrdenesCriteria, options: ZsinOrdenesExecutionOptions):
@@ -113,15 +113,22 @@ class ZsinOrdenesService:
         try:
             resultados: Dict[str, Dict[str, str]] = {}
 
-            self._transaction_service.run_transaction(self._config.transaction_code)
+            # --- Inicio de Transacción ---
 
-            # Modelo
+            # Modelo TODO esto ya no serían datos a pasar al formulario, en todo caso por url dynpro
             payload = SapPayloadBuilder.build_payload(criteria)
+
+            # FIXME TODO Esto también dejaría de ser necesario con el nuevo sistema URL + DynPro
+            self._transaction_service.run_transaction(self._config.transaction_code)
             
             # Proceso UI
+            # FIXME TODO esto podría ser ya evitable gracias a nuestro nuevo sistema por URL y códigos DynPro
             self._page.esperar_formulario()
             self._page.rellenar_formulario(payload)
             self._page.ejecutar()
+            # TODO Con el nuevo sistema URL + DynPro este bloque podría ser innecesario
+
+            # Espera de Resultados.
             self._page.esperar_resultados(60000)
 
             # --- Resultados y Salida Temprana ---
