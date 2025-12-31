@@ -111,23 +111,18 @@ class ZsinOrdenesService:
         :param options: Opciones de ejecución (acciones, configuración de salida).
         """
         try:
+
             resultados: Dict[str, Dict[str, str]] = {}
 
-            # --- Inicio de Transacción ---
-
-            # Modelo TODO esto ya no serían datos a pasar al formulario, en todo caso por url dynpro
-            payload = SapPayloadBuilder.build_payload(criteria)
-
-            # FIXME TODO Esto también dejaría de ser necesario con el nuevo sistema URL + DynPro
-            self._transaction_service.run_transaction(self._config.transaction_code)
+            # Si NO usamos vía rápida, significa que estamos en el formulario vacío
+            if not getattr(self._config, 'use_fast_url', False):
+                # Tenemos que rellenar a mano
+                payload = SapPayloadBuilder.build_payload(criteria)
+                self._page.rellenar_formulario(payload)
+                self._page.ejecutar()
             
-            # Proceso UI
-            # FIXME TODO esto podría ser ya evitable gracias a nuestro nuevo sistema por URL y códigos DynPro
-            self._page.esperar_formulario()
-            self._page.rellenar_formulario(payload)
-            self._page.ejecutar()
-            # TODO Con el nuevo sistema URL + DynPro este bloque podría ser innecesario
-
+            # Si usamos vía rápida, el código salta aquí directamente.
+            # Como la URL ya ejecutó el Dynpro, SAP ya nos muestra la tabla.
             # Espera de Resultados.
             self._page.esperar_resultados(60000)
 
