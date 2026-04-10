@@ -32,14 +32,18 @@ class BaseTransactionConfig(BaseModel):
     download_dir: Optional[Path] = None
     # NUEVO: Flag para habilitar la vía rápida por URL
     use_fast_url: bool = True
+    # --- AÑADIDO: Atributo base para evitar AttributeError en transacciones sin mapeo ---
+    url_field_mapping: Dict[str, str] = {}
 
 class Mb52Config(BaseTransactionConfig):
     """Configuración específica para MB52."""
-    # Aquí podrías añadir campos únicos para MB52 en el futuro
     pass
 
 class Iq09Config(BaseTransactionConfig):
     """Configuración específica para IQ09."""
+    url_field_mapping: Dict[str, str] = {
+        "centro": "SO_WERKS-LOW"
+    }
     pass
 
 class ZsinOrdenesConfig(BaseTransactionConfig):

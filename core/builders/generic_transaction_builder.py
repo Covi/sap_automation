@@ -80,7 +80,7 @@ class GenericTransactionBuilder(BuilderProtocol):
         if use_fast_path:
             log.info(f"Navegación directa por URL para {config.transaction_code}")
             # FÍSICAMENTE: El builder construye la URL y ordena el salto
-            command = SapUrlBuilder.build_transaction_url(config.transaction_code, criteria)
+            command = SapUrlBuilder.build_transaction_url(config.transaction_code, criteria, config)
 
             # FIXME No me gusta esto así.
             # XXX Accedemos a la instancia de page de Playwright a través del objeto page del servicio
