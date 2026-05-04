@@ -14,7 +14,7 @@ class PrintService:
 
         try:
             log.debug(f"Enviando '{ruta_fichero.name}' a la cola de impresión...")
-            subprocess.run(['lp', str(ruta_fichero)], check=True, capture_output=True, text=True)
+            subprocess.run(['lp -o fit-to-page', str(ruta_fichero)], check=True, capture_output=True, text=True)
             log.debug("✅ El fichero se ha enviado a la cola de impresión correctamente.")
         except FileNotFoundError:
             log.error("El comando 'lp' no se encontró. Asegúrate de estar en un sistema compatible (Linux/macOS) o tener CUPS instalado.")
