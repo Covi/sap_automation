@@ -1,11 +1,11 @@
-# services/print_service.py
+# core/infrastructure/printing/linux_print_service.py
 import logging
 import subprocess
 from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-class PrintService:
+class LinuxPrintService:
     def imprimir_fichero(self, ruta_fichero: Path):
         """Envía un fichero a la cola de impresión del sistema."""
         if not ruta_fichero.exists():
@@ -14,7 +14,8 @@ class PrintService:
 
         try:
             log.debug(f"Enviando '{ruta_fichero.name}' a la cola de impresión...")
-            subprocess.run(['lp -o fit-to-page', str(ruta_fichero)], check=True, capture_output=True, text=True)
+            # Añadimos el argumento -o fit-to-page para corregir el desajuste
+            subprocess.run(['lp', '-o', 'fit-to-page', str(ruta_fichero)], check=True, capture_output=True, text=True)
             log.debug("✅ El fichero se ha enviado a la cola de impresión correctamente.")
         except FileNotFoundError:
             log.error("El comando 'lp' no se encontró. Asegúrate de estar en un sistema compatible (Linux/macOS) o tener CUPS instalado.")

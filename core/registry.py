@@ -20,7 +20,7 @@ from schemas.zsin_ordenes import ZsinOrdenesCriteria, ZsinOrdenesExecutionOption
 from services.zsin_ordenes import ZsinOrdenesService
 
 from utils.file_handler import FileHandler
-from utils.print_service import PrintService
+from core.infrastructure.printing.linux_print_service import LinuxPrintService
 
 @dataclass
 class TransactionRecipe:
@@ -60,7 +60,7 @@ TRANSACTION_REGISTRY: Dict[str, TransactionRecipe] = {
        options_schema=ZsinOrdenesExecutionOptions,
        extra_dependencies={
            "file_handler": FileHandler(),
-           "print_service": PrintService()
+           "print_service": LinuxPrintService()
         }
    ),
 }
