@@ -71,7 +71,9 @@ def main() -> None:
         page = manager.start_browser_with_session(
             storage_state_path=STATE_FILE if os.path.exists(STATE_FILE) else None
         )
-        
+
+        # FIXME Si usamos por url directo y DYNpro todo esto sobra
+
         # --- CAMBIO: Usamos la URL desde la configuración general ---
         page.goto(settings.general.base_url)
 

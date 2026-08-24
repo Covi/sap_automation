@@ -27,6 +27,11 @@ log_format = "%(asctime)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d
     export_filename = "STOCK_SERIADO.xlsx"
     locator_file = "iq09.toml"
 
+    [transactions.ZSD_INF_FACT_EST]
+    transaction_code = "ZSD_INF_FACT_EST"
+    export_filename = "FACTURACION.xlsx"
+    locator_file = "ZSD_INF_FACT_EST.toml"
+
     [transactions.zsin_ordenes]
     transaction_code = "ZSIN_ORDENES"
     export_filename = "smart"

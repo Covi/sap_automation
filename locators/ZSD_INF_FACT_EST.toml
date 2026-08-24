@@ -1,0 +1,21 @@
+# Fichero: locators/mb52.toml
+# Descripción: Locators para la transacción MB52 con sintaxis CSS correcta.
+
+[form]
+material = "[id='M0:46:::1:34']"
+centro   = "[id='M0:46:::2:34']"
+almacen  = "[id='M0:46:::3:34']"
+
+[buttons]
+descargar_hoja = "div[role='button'][accesskey='H'][title*='F7']"
+#descargar_hoja = "[id='M0:48::btn[43]']"
+
+[dialogs]
+filename_input  = "[id='M1:46:1::1:17']"
+# Este es un ID válido, se puede quedar como está
+filename_input2 = "#popupDialogInputField-r"
+exportar_a = 'div[title="Exportar datos"]'
+
+[results]
+# Este es un ID válido, se puede quedar como está
+tabla_resultados = "#userarealist0"
