@@ -2,6 +2,7 @@
 
 # 1. LIBRERÍA ESTÁNDAR
 import logging
+import re
 from typing import Callable, Dict, Optional
 
 # 2. LIBRERÍAS DE TERCEROS
@@ -127,38 +128,56 @@ class ZsinOrdenesService:
                     self._pause()
                 return 
 
-            log.info(f"✅ Se encontraron {total} resultados.")
+            # Extrae números de orden de 12 dígitos empezando por 0 sin tocar el POM
+            texto_pantalla = self._page.playwright_page.locator("body").inner_text()
+            ordenes = list(dict.fromkeys(re.findall(r"\b0\d{11}\b", texto_pantalla)))
+            if not ordenes:
+                ordenes = [f"Lote_de_{total}_ordenes"]
 
-            # --- Reenviar (El uso sigue siendo condicional) ---
-            envio_service = self._envio
-            if options.reenviar and envio_service: 
-                resultados["envio"] = self._ejecutar_seguro(
-                    envio_service.ejecutar,
-                    "Reenvío"
-                )
+            log.info(f"✅ Se encontraron {total} resultados. Órdenes detectadas: {ordenes}")
 
-                # *** Se llama al protocolo de estabilización después de Reenvío ***
-                self._estabilizar_ui_post_accion("Reenvío")
+            estado_envio = "ko" if options.reenviar else "na"
+            estado_impresion = "ko" if options.imprimir else "na"
 
-            # --- Pausa para DEBUG por argumentos ---
-            if options.wait_after_results:
-                self._pause()
+            try:
+                # --- Reenviar (El uso sigue siendo condicional) ---
+                envio_service = self._envio
+                if options.reenviar and envio_service: 
+                    resultados["envio"] = self._ejecutar_seguro(
+                        envio_service.ejecutar,
+                        "Reenvío"
+                    )
+                    if resultados["envio"]["status"] == "ok":
+                        estado_envio = "ok"
 
-            # --- Imprimir (Type Narrowing y Optional Check) ---
-            impresion_service = self._impresion
-            if options.imprimir and impresion_service:
-                resultados["impresion"] = self._ejecutar_seguro(
-                    lambda: impresion_service.ejecutar(
-                        options.output_filename, options.output_path
-                    ),
-                    "Impresión"
-                )
-                # *** Si hubiera una acción después de Imprimir, se llamaría aquí ***
-                # self._estabilizar_ui_post_accion("Impresión")
+                    # *** Se llama al protocolo de estabilización después de Reenvío ***
+                    self._estabilizar_ui_post_accion("Reenvío")
 
-            # --- Pausa ---
-            if options.wait_after_results:
-                self._pause()
+                # --- Pausa para DEBUG por argumentos ---
+                if options.wait_after_results:
+                    self._pause()
+
+                # --- Imprimir (Type Narrowing y Optional Check) ---
+                impresion_service = self._impresion
+                if options.imprimir and impresion_service:
+                    resultados["impresion"] = self._ejecutar_seguro(
+                        lambda: impresion_service.ejecutar(
+                            options.output_filename, options.output_path
+                        ),
+                        "Impresión"
+                    )
+                    if resultados["impresion"]["status"] == "ok":
+                        estado_impresion = "ok"
+                    # *** Si hubiera una acción después de Imprimir, se llamaría aquí ***
+                    # self._estabilizar_ui_post_accion("Impresión")
+
+                # --- Pausa ---
+                if options.wait_after_results:
+                    self._pause()
+
+            finally:
+                for orden in ordenes:
+                    log.info(f"Orden {orden} -> enviada: {estado_envio}; impresa: {estado_impresion}")
 
             return resultados
 
