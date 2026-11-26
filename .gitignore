@@ -1,21 +1,23 @@
+# Ignorar todos los archivos y carpetas ocultos
+.*
+
+# Excepciones de archivos ocultos que SÍ quieres en Git
+!.gitignore
+!.github/
+
 # Archivos generados por Python
 __pycache__/
-*.
-!.gitignore
-!.github/ # Excepción para la carpeta de GitHub Actions
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
 *.egg-info/
 dist/
 build/
 sdist/
 wheel/
 
-# Entornos virtuales
+# Entornos virtuales (ya cubiertos en parte por .*, pero bueno mantenerlos)
 venv/
-.venv/
 env/
-.env*
 
 # Archivos de desarrollo y temporales
 *.log
